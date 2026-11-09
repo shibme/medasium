@@ -7,16 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ageFrom } from '@/lib/format';
+import { SAMPLE_ID } from '@/lib/seed';
 import { useStore } from '@/store';
 
 export function Roster() {
-  const { patients, loading, refresh, seed } = useStore();
+  const { patients, loading, refresh } = useStore();
   const [sp, setSp] = useSearchParams();
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState('');
   const nav = useNavigate();
   useEffect(() => { if (sp.get('new')) { setAdding(true); setSp({}, { replace: true }); } }, [sp, setSp]);
-  const hasSample = patients.some((p) => p.id === 'pt_sample_kamala');
+  const hasSample = patients.some((p) => p.id === SAMPLE_ID);
   const shown = useMemo(() => patients.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())), [patients, q]);
   return (
     <div>
@@ -27,7 +28,7 @@ export function Roster() {
           <Empty icon={<Users />} title="No patients yet">Add the first patient to start logging care.</Empty>
           <div className="mx-auto grid max-w-sm gap-2">
             <Button size="lg" onClick={() => setAdding(true)}><UserPlus />Add the first patient</Button>
-            <Button size="lg" variant="outline" onClick={async () => nav(`/p/${await seed()}`)}><Sparkles />Load sample patient</Button>
+            <Button size="lg" variant="outline" onClick={() => nav('/import?sample=1')}><Sparkles />Load sample patient</Button>
           </div>
         </>
       )}
@@ -54,7 +55,7 @@ export function Roster() {
         })}
       </div>
       {patients.length > 0 && !hasSample && (
-        <Button variant="ghost" className="mt-4 w-full text-muted-foreground" onClick={async () => nav(`/p/${await seed()}`)}><Sparkles />Load sample patient (demo data)</Button>
+        <Button variant="ghost" className="mt-4 w-full text-muted-foreground" onClick={() => nav('/import?sample=1')}><Sparkles />Load sample patient (demo data)</Button>
       )}
       {adding && <ProfileForm onClose={() => setAdding(false)} onSaved={(p) => { setAdding(false); refresh().then(() => nav(`/p/${p.id}`)); }} />}
     </div>

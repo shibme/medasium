@@ -25,7 +25,7 @@ function Stat({ n, label, tone }: { n: number; label: string; tone?: 'bad' | 'go
 }
 
 export function Today({ onAdd }: { onAdd: (patientId?: string) => void }) {
-  const { patients, loading, version, seed } = useStore();
+  const { patients, loading, version } = useStore();
   const [groups, setGroups] = useState<Group[]>([]);
   const nav = useNavigate();
   const [tick, setTick] = useState(0);
@@ -52,7 +52,7 @@ export function Today({ onAdd }: { onAdd: (patientId?: string) => void }) {
       </Empty>
       <div className="mx-auto grid max-w-sm gap-2">
         <Button size="lg" asChild><Link to="/patients?new=1"><UserPlus />Add the first patient</Link></Button>
-        <Button size="lg" variant="outline" onClick={async () => nav(`/p/${await seed()}`)}><Sparkles />Explore with a sample patient</Button>
+        <Button size="lg" variant="outline" onClick={() => nav('/import?sample=1')}><Sparkles />Explore with a sample patient</Button>
         <Button variant="link" asChild><Link to="/import"><FileInput />Import records, or let an AI build the file</Link></Button>
       </div>
     </div>

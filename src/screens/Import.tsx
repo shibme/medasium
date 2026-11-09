@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Bot, Check, Copy, ExternalLink, FileJson, FileUp, FlaskConical, Sparkles, TriangleAlert } from 'lucide-react';
 import { applyImport, previewImport, type ImportPreview } from '@/db';
 import { PageHeader, useToast } from '@/components/ui';
@@ -7,12 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { parseImport } from '@/lib/importer';
+import { SAMPLE_PATH, fetchSampleFile, shiftSample } from '@/lib/seed';
 import { cn } from '@/lib/utils';
 import type { MedasiumExport } from '@/model/schema';
 import { useStore } from '@/store';
 
 const base = () => location.href.split('#')[0].replace(/[^/]*$/, '');
-const URLS = () => ({ agent: base() + 'agent/AGENTS.md', schema: base() + 'schema/medasium.schema.json', sample: base() + 'samples/sample-patient.json' });
+const URLS = () => ({ agent: base() + 'agent/AGENTS.md', schema: base() + 'schema/medasium.schema.json', sample: base() + SAMPLE_PATH });
 
 function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
   const [ok, setOk] = useState(false);
@@ -27,7 +28,9 @@ function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
 }
 
 export function ImportScreen() {
-  const { refresh, seed } = useStore();
+  const { refresh } = useStore();
+  const [sp, setSp] = useSearchParams();
+  const [recentred, setRecentred] = useState(false);
   const toast = useToast();
   const nav = useNavigate();
   const [data, setData] = useState<MedasiumExport | null>(null);
@@ -39,14 +42,28 @@ export function ImportScreen() {
   const u = URLS();
   const prompt = `You are filling a Medasium import file for ONE patient from the attached documents (prescriptions, lab reports, discharge summaries, notes).\n1. Read the agent guide: ${u.agent}\n2. Validate against the JSON Schema: ${u.schema}\nOutput only the JSON file. Do not invent values; omit what the documents do not say. Use India defaults (IST +05:30, mg/dL, °F, kg).`;
 
-  async function pick(file?: File) {
-    setErr(''); setData(null); setPv(null);
+  /** Every import, including the bundled sample, goes through the same parse -> preview -> merge/replace path. */
+  async function pick(file?: File, opts: { recentre?: boolean } = {}) {
+    setErr(''); setData(null); setPv(null); setRecentred(false);
     if (!file) return;
     setFileName(file.name);
     const r = await parseImport(file);
     if (!r.ok) return setErr(r.error);
-    setData(r.data); setPv(await previewImport(r.data));
+    // The sample's dates are moved so it ends today; a file you pick yourself is imported exactly as it is.
+    const d = opts.recentre ? shiftSample(r.data) : r.data;
+    setRecentred(!!opts.recentre);
+    setData(d); setPv(await previewImport(d));
   }
+  async function loadSample() {
+    try { await pick(await fetchSampleFile(), { recentre: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (e) { setErr((e as Error).message); }
+  }
+  // "Load sample patient" buttons elsewhere link here with ?sample=1.
+  const handled = useRef(false);
+  useEffect(() => {
+    if (sp.get('sample') && !handled.current) { handled.current = true; setSp({}, { replace: true }); loadSample(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp]);
   async function apply(mode: 'merge' | 'replace') {
     if (!data) return;
     setBusy(true);
@@ -82,6 +99,7 @@ export function ImportScreen() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2"><h2 className="truncate text-base font-semibold tracking-tight">{pv.patientName}</h2><Badge variant={pv.patientExists ? 'warning' : 'success'}>{pv.patientExists ? 'Existing patient' : 'New patient'}</Badge></div>
               <p className="truncate text-xs text-muted-foreground">{fileName} · profile {!pv.patientExists ? 'new' : pv.patientChanged ? 'changed' : 'unchanged'}</p>
+              {recentred && <p className="mt-0.5 text-xs text-muted-foreground">Sample data: dates are moved so the history ends today.</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 px-4 pb-4">
@@ -133,10 +151,10 @@ export function ImportScreen() {
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-500/14 text-amber-600 dark:text-amber-400"><FlaskConical className="size-5" /></span>
           <div className="min-w-0">
             <h2 className="text-base font-semibold tracking-tight">Try it with sample data</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">A fictional patient with 60 days of vitals, medicines, notes, visits and care tasks. <a className="font-medium text-primary underline-offset-4 hover:underline" href={u.sample} download>Download the file</a> to see the format.</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">Amma, a fictional patient on cancer follow-up: 6 months of lab reports (tumour markers, CBC, LFT, RFT and more) plus 60 days of vitals, medicines, notes, visits and care tasks. <a className="font-medium text-primary underline-offset-4 hover:underline" href={u.sample} download>Download the file</a> to see the format.</p>
           </div>
         </div>
-        <Button variant="outline" className="shrink-0" onClick={async () => nav(`/p/${await seed()}`)}><Sparkles />Load sample</Button>
+        <Button variant="outline" className="shrink-0" onClick={loadSample}><Sparkles />Load sample</Button>
       </Card>
     </div>
   );

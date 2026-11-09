@@ -1,15 +1,17 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChartLine, Table2, TriangleAlert } from 'lucide-react';
 import type { Series } from '@/lib/series';
-import { fmtDate, fmtDateTime, fmtNum } from '@/lib/format';
+import { fmtDate, fmtDateTime } from '@/lib/format';
+import { fmtNumber as fmtNum } from '@/lib/labs';
+import { fmtRange } from '@/model/labs';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 
-const H = 200, L = 36, R = 12, T = 12, B = 26;
+const H = 200, L = 40, R = 12, T = 12, B = 26;
 interface Props { title: string; unit: string; series: Series[]; colors: string[]; domain?: [number, number] }
 
-function useWidth() {
+export function useWidth() {
   const ref = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(600);
   useLayoutEffect(() => {
@@ -33,7 +35,9 @@ export function Chart({ title, unit, series, colors, domain }: Props) {
     let lo = Math.min(...vs, ...bands.map((b) => b.lo ?? Infinity)), hi = Math.max(...vs, ...bands.map((b) => b.hi ?? -Infinity));
     if (!isFinite(lo)) lo = Math.min(...vs);
     if (!isFinite(hi)) hi = Math.max(...vs);
+    const nonNeg = lo >= 0;
     const pad = (hi - lo || 1) * 0.12; lo -= pad; hi += pad;
+    if (nonNeg) lo = Math.max(0, lo); // never draw a negative axis for quantities that can't be negative
     const ts = all.map((p) => p.t);
     const t0 = domain?.[0] ?? Math.min(...ts), t1 = domain?.[1] ?? Math.max(...ts);
     const X = (t: number) => (t1 === t0 ? (L + W - R) / 2 : L + ((t - t0) / (t1 - t0)) * (W - L - R));
@@ -43,6 +47,8 @@ export function Chart({ title, unit, series, colors, domain }: Props) {
   if (!all.length) return null;
   const { X, Y } = g;
   const ticks = [0, 1, 2, 3].map((i) => g.lo + ((g.hi - g.lo) * i) / 3);
+  const step = (g.hi - g.lo) / 3;
+  const tickDp = step >= 5 ? 0 : step >= 0.5 ? 1 : step >= 0.05 ? 2 : 3;
   const nx = W < 420 ? 2 : 3;
   const xt = g.t1 === g.t0 ? [g.t0] : Array.from({ length: nx }, (_, i) => g.t0 + ((g.t1 - g.t0) * i) / (nx - 1));
   const sorted = [...new Set(all.map((p) => p.t))].sort((a, b) => a - b);
@@ -64,7 +70,7 @@ export function Chart({ title, unit, series, colors, domain }: Props) {
       <div className="flex items-start justify-between gap-2 p-4 pb-1">
         <div className="min-w-0">
           <h3 className="truncate text-[15px] font-semibold tracking-tight">{title}</h3>
-          <div className="mt-0.5 text-xs text-muted-foreground">{unit} · {all.length} {all.length === 1 ? 'reading' : 'readings'}</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">{unit && unit !== 'ratio' ? `${unit} · ` : ''}{all.length} {all.length === 1 ? 'reading' : 'readings'}</div>
           {series.length > 1 && <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">{series.map((s, i) => <span key={s.key} className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-[3px]" style={{ background: colors[i] }} />{s.label}</span>)}</div>}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -81,7 +87,7 @@ export function Chart({ title, unit, series, colors, domain }: Props) {
           <div className="max-h-64 overflow-auto px-2">
             <table className="w-full text-sm tabular-nums">
               <thead className="sticky top-0 bg-card text-left text-xs text-muted-foreground"><tr><th className="py-1.5 pr-2 font-medium">When</th>{series.map((s) => <th key={s.key} className="py-1.5 pr-2 text-right font-medium">{series.length > 1 ? s.label : unit}</th>)}</tr></thead>
-              <tbody>{[...sorted].reverse().map((t) => <tr key={t} className="border-t"><td className="py-1.5 pr-2 text-muted-foreground">{fmtDateTime(new Date(t))}</td>{series.map((s) => { const p = s.points.find((q) => q.t === t); return <td key={s.key} className={p?.bad ? 'py-1.5 pr-2 text-right font-semibold text-destructive' : 'py-1.5 pr-2 text-right'}>{p ? `${fmtNum(p.v)}${p.bad ? ' ◆' : ''}` : ''}</td>; })}</tr>)}</tbody>
+              <tbody>{[...sorted].reverse().map((t) => <tr key={t} className="border-t"><td className="py-1.5 pr-2 text-muted-foreground">{fmtDateTime(new Date(t))}</td>{series.map((s) => { const p = s.points.find((q) => q.t === t); return <td key={s.key} className={p?.bad ? 'py-1.5 pr-2 text-right font-semibold text-destructive' : 'py-1.5 pr-2 text-right'}>{p ? `${p.q ?? ''}${fmtNum(p.v)}${p.bad ? ' ◆' : ''}` : ''}</td>; })}</tr>)}</tbody>
             </table>
           </div>
         ) : (
@@ -92,7 +98,7 @@ export function Chart({ title, unit, series, colors, domain }: Props) {
                 <rect key={'b' + s.key} className="band" x={L} width={W - L - R} rx={4}
                   y={Y(s.range.hi ?? g.hi)} height={Math.max(0, Y(s.range.lo ?? g.lo) - Y(s.range.hi ?? g.hi))} style={{ fill: colors[i] }} />
               ))}
-              {ticks.map((v) => <g key={v}><line className="grid" x1={L} x2={W - R} y1={Y(v)} y2={Y(v)} /><text className="axis" x={L - 6} y={Y(v) + 4} textAnchor="end">{Math.round(v)}</text></g>)}
+              {ticks.map((v) => <g key={v}><line className="grid" x1={L} x2={W - R} y1={Y(v)} y2={Y(v)} /><text className="axis" x={L - 6} y={Y(v) + 4} textAnchor="end">{v.toFixed(tickDp)}</text></g>)}
               {xt.map((t, i) => <text key={t} className="axis" x={X(t)} y={H - 6} textAnchor={xt.length === 1 ? 'middle' : i === 0 ? 'start' : i === xt.length - 1 ? 'end' : 'middle'}>{fmtDate(new Date(t)).slice(0, 5)}</text>)}
               {series.map((s, i) => !single && s.points.length > 1 && (
                 <path key={'l' + s.key} className="line" pathLength={1} fill="none" stroke={colors[i]} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round"
@@ -114,7 +120,7 @@ export function Chart({ title, unit, series, colors, domain }: Props) {
                   <div key={s.key} className="flex items-center gap-1.5 whitespace-nowrap">
                     <i className="size-2 rounded-[2px]" style={{ background: colors[i] }} />
                     {series.length > 1 && <span className="text-muted-foreground">{s.label}</span>}
-                    <b className="tabular-nums">{fmtNum(p!.v)}</b><span className="text-muted-foreground">{unit}</span>
+                    <b className="tabular-nums">{p!.q ?? ''}{fmtNum(p!.v)}</b>{unit !== 'ratio' && <span className="text-muted-foreground">{unit}</span>}
                     {p!.bad && <span className="font-semibold text-destructive">◆</span>}
                   </div>
                 ))}
@@ -126,7 +132,7 @@ export function Chart({ title, unit, series, colors, domain }: Props) {
       {view === 'chart' && (single || range) && (
         <p className="border-t px-4 py-2 text-xs text-muted-foreground">
           {single ? 'Only one reading in this period, so no trend line is drawn. ' : ''}
-          {range && <>Shaded band: reference {series.length > 1 ? 'ranges' : 'range'}{series.length === 1 && <> {range.lo ?? ''}{range.hi !== undefined ? `–${range.hi}` : '+'} {unit}</>}. <span className="text-destructive">◆</span> marks readings outside it.</>}
+          {range && <>Shaded band: reference {series.length > 1 ? 'ranges' : `range ${fmtRange(range, unit !== 'ratio' ? unit : '')}`}. <span className="text-destructive">◆</span> marks readings outside it.</>}
         </p>
       )}
     </Card>

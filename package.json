@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "gen": "tsx scripts/gen-schema.ts && tsx scripts/gen-sample.ts",
+    "gen": "tsx scripts/gen-schema.ts",
     "build": "npm run gen && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run"

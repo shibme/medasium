@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LAB_BY_CODE, LAB_CODES } from './labs';
 
 /** Medasium export format. India-first defaults: IST (+05:30), mg/dL, °F, kg, cm, +91 phones. */
 export const FORMAT_VERSION = 1;
@@ -85,7 +86,42 @@ export const TaskEntry = z
   .refine((t) => t.outcome !== 'skipped' || !!t.reason?.trim(), { message: 'A skipped task must carry a reason', path: ['reason'] })
   .describe('Outcome of one occurrence of a recurring task. timestamp = when the outcome was recorded.');
 
-export const Entry = z.discriminatedUnion('type', [VitalsEntry, MedicationEntry, ObservationEntry, AppointmentEntry, PhotoEntry, TaskEntry]);
+export const LAB_QUALIFIER = ['<', '>'] as const;
+export const LabResult = z
+  .object({
+    test: z.enum([...LAB_CODES, 'custom']).describe('Catalogue test code (see the lab catalogue in the agent guide / the oneOf list in this schema), or "custom" for any test not in the catalogue.'),
+    name: z.string().min(1).max(120).optional().describe('REQUIRED for custom tests: the test name as printed. Optional (ignored) for catalogue tests.'),
+    value: z.number().optional().describe('Numeric result, ALREADY CONVERTED to the test\'s canonical unit. Exactly one of value or text.'),
+    qualifier: z.enum(LAB_QUALIFIER).optional().describe('Use when the report prints "<2.0" or ">1000": put the number in value and "<" or ">" here.'),
+    text: z.string().min(1).max(200).optional().describe('Non-numeric result as printed, e.g. "Negative", "Non-reactive", "6-8 /HPF". Exactly one of value or text.'),
+    abnormal: z.boolean().optional().describe('Only for text results: true if the report marks it abnormal. Numeric results are flagged automatically from the range.'),
+    unit: z.string().min(1).max(40).optional().describe('Catalogue tests: omit, or give the canonical unit exactly. Custom tests: the unit as printed.'),
+    refLow: z.number().optional().describe('Lower limit of the reference range PRINTED ON THE REPORT (canonical unit). Overrides the catalogue range.'),
+    refHigh: z.number().optional().describe('Upper limit of the reference range PRINTED ON THE REPORT (canonical unit). For "< 37" use refHigh 37.'),
+  })
+  .superRefine((x, ctx) => {
+    const issue = (message: string, path: string) => ctx.addIssue({ code: 'custom', message, path: [path] });
+    if ((x.value === undefined) === (x.text === undefined)) issue('Give exactly one of value (number) or text', 'value');
+    if (x.qualifier && x.value === undefined) issue('qualifier needs a numeric value', 'qualifier');
+    if (x.abnormal !== undefined && x.text === undefined) issue('abnormal is only for text results; numeric results are flagged from the range', 'abnormal');
+    if (x.refLow !== undefined && x.refHigh !== undefined && x.refLow > x.refHigh) issue('refLow must not be greater than refHigh', 'refLow');
+    if (x.test === 'custom') { if (!x.name?.trim()) issue('Custom tests need a name', 'name'); return; }
+    const t = LAB_BY_CODE[x.test];
+    if (x.unit !== undefined && x.unit !== t.unit) {
+      const alt = t.alt?.find((a) => a.unit === x.unit);
+      issue(`${t.name} must be in ${t.unit}${alt ? `; convert ${alt.unit} by multiplying by ${+alt.factor.toPrecision(4)}` : ''} (or omit unit)`, 'unit');
+    }
+  })
+  .describe('One lab test result.');
+
+export const LabsEntry = z.object({
+  ...base,
+  type: z.literal('labs'),
+  lab: z.string().max(200).optional().describe('Laboratory or hospital name, e.g. "Adyar Diagnostics".'),
+  results: z.array(LabResult).min(1).describe('All results from one report / sample collection.'),
+}).describe('Lab report: one sample collection with its results. timestamp = sample collection time.');
+
+export const Entry = z.discriminatedUnion('type', [VitalsEntry, MedicationEntry, ObservationEntry, AppointmentEntry, PhotoEntry, TaskEntry, LabsEntry]);
 
 export const Task = z.object({
   id,
@@ -151,6 +187,8 @@ export const MedasiumExport = z.object({
 }).describe('Medasium import/export file for ONE patient.');
 
 export type Reading = z.infer<typeof Reading>;
+export type LabResult = z.infer<typeof LabResult>;
+export type LabsEntry = z.infer<typeof LabsEntry>;
 export type Entry = z.infer<typeof Entry>;
 export type Task = z.infer<typeof Task>;
 export type Patient = z.infer<typeof Patient>;

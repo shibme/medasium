@@ -19,6 +19,6 @@ export default defineConfig({
       },
     },
   ],
-  build: { chunkSizeWarningLimit: 700 },
+  build: { chunkSizeWarningLimit: 800 },
   test: { environment: 'node' },
 });

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
-import { putEntry } from '@/db';
-import type { Entry, Reading } from '@/model/schema';
+import { getBundle, putEntry } from '@/db';
+import type { Entry, LabsEntry, Reading } from '@/model/schema';
 import { APPOINTMENT_KIND, APPOINTMENT_STATUS, MEDICATION_STATUS, PHOTO_CATEGORY, SEVERITY } from '@/model/schema';
 import { nowIst, uid } from '@/lib/format';
 import { UNITS } from '@/lib/ranges';
@@ -9,6 +9,7 @@ import { compressImage } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import { ResponsiveDialog } from './ResponsiveDialog';
 import { FORM_TYPES, TYPE_META, type FormType } from './entryMeta';
+import { LabEditor, buildResults, rowsFromResults, type LabRow } from './LabForm';
 import { Button } from './ui/button';
 import { Input, InputSuffix, Textarea } from './ui/input';
 import { Field } from './ui/label';
@@ -58,6 +59,20 @@ export function EntryForm({ patientId, entry, initialType, onClose, onSaved }: P
     outcome: e?.outcome ?? '', category: e?.category ?? 'report', caption: e?.caption ?? '', image: e?.image ?? '',
   });
   const set = (k: keyof typeof f, val: string) => setF((p) => ({ ...p, [k]: val }));
+  // Lab results
+  const [labRows, setLabRowsState] = useState<LabRow[]>(() => (e?.type === 'labs' ? rowsFromResults(e.results) : []));
+  const setLabRows = (fn: (r: LabRow[]) => LabRow[]) => setLabRowsState(fn);
+  const [labName, setLabName] = useState<string>(e?.type === 'labs' ? e.lab ?? '' : '');
+  const [ctx, setCtx] = useState<{ sex?: string; labNames: string[]; last?: LabsEntry }>({ labNames: [] });
+  useEffect(() => {
+    let live = true;
+    getBundle(patientId).then((b) => {
+      if (!live || !b) return;
+      const labs = b.entries.filter((x): x is LabsEntry => x.type === 'labs' && x.id !== entry?.id).sort((a, c) => c.timestamp.localeCompare(a.timestamp));
+      setCtx({ sex: b.patient.sex, labNames: [...new Set(labs.map((x) => x.lab).filter(Boolean) as string[])], last: labs[0] });
+    });
+    return () => { live = false; };
+  }, [patientId, entry?.id]);
   const chType = (t: FormType) => { setType(t); setErr(''); if (t === 'appointment') set('status', 'scheduled'); if (t === 'medication') set('status', 'taken'); };
 
   async function save() {
@@ -76,6 +91,10 @@ export function EntryForm({ patientId, entry, initialType, onClose, onSaved }: P
       for (const m of ['weight', 'temperature', 'pulse', 'spo2', 'respiratoryRate'] as const) if (num(v[m]) !== undefined) rs.push({ metric: m, value: num(v[m])! });
       if (!rs.length) return setErr('Enter at least one reading.');
       out = { ...base, type: 'vitals', readings: rs };
+    } else if (type === 'labs') {
+      const b = buildResults(labRows);
+      if ('error' in b) return setErr(b.error);
+      out = { ...base, type: 'labs', ...(labName.trim() ? { lab: labName.trim() } : {}), results: b.results };
     } else if (type === 'medication') {
       if (!f.name.trim()) return setErr('Enter the medicine name.');
       out = { ...base, type: 'medication', name: f.name.trim(), ...(f.dose.trim() ? { dose: f.dose.trim() } : {}), status: f.status, ...(f.status !== 'taken' && f.reason.trim() ? { reason: f.reason.trim() } : {}) };
@@ -106,7 +125,7 @@ export function EntryForm({ patientId, entry, initialType, onClose, onSaved }: P
       footer={<><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={busy} onClick={save} className="min-w-28">{entry ? 'Save changes' : 'Save entry'}</Button></>}>
       <div className="grid grid-cols-1 gap-4">
         {!entry && (
-          <div role="radiogroup" aria-label="Entry type" className="grid grid-cols-5 gap-1.5">
+          <div role="radiogroup" aria-label="Entry type" className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
             {FORM_TYPES.map((t) => {
               const { icon: I, short, tint } = TYPE_META[t];
               const on = t === type;
@@ -120,7 +139,19 @@ export function EntryForm({ patientId, entry, initialType, onClose, onSaved }: P
             })}
           </div>
         )}
-        <Field label="Date and time (IST)"><Input type="datetime-local" value={when} onChange={(ev) => setWhen(ev.target.value)} /></Field>
+        {type === 'labs' ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Sample collected (IST)"><Input type="datetime-local" value={when} onChange={(ev) => setWhen(ev.target.value)} /></Field>
+            <Field label="Lab or hospital (optional)">
+              <Input value={labName} onChange={(ev) => setLabName(ev.target.value)} list="lab-names" placeholder="e.g. Adyar Diagnostics" autoComplete="off" />
+            </Field>
+            <datalist id="lab-names">{ctx.labNames.map((n) => <option key={n} value={n} />)}</datalist>
+          </div>
+        ) : (
+          <Field label="Date and time (IST)"><Input type="datetime-local" value={when} onChange={(ev) => setWhen(ev.target.value)} /></Field>
+        )}
+
+        {type === 'labs' && <LabEditor rows={labRows} setRows={setLabRows} sex={ctx.sex} lastReport={ctx.last} />}
 
         {type === 'vitals' && <>
           <div className="grid grid-cols-2 gap-3">

@@ -27,12 +27,15 @@ import { addDays, ageFrom, fmtDate, fmtPhone, istInstant, ymd } from '@/lib/form
 import { LABELS, UNITS, isAbnormal } from '@/lib/ranges';
 import { needsAction, occurrences } from '@/lib/schedule';
 import { metricSeries } from '@/lib/series';
+import { entryHasAbnormal, labHistory, labSearchText, labSeries, labTestsIn, normalize } from '@/lib/labs';
+import { LAB_BY_CODE, LAB_PANELS } from '@/model/labs';
+import { LabDetail, LabTrendCard } from '@/components/LabTrendCard';
 import { cn } from '@/lib/utils';
 import type { Entry, Task } from '@/model/schema';
 import { lastPatient, useStore } from '@/store';
 
 type Tab = 'timeline' | 'charts' | 'tasks' | 'profile';
-const PRESETS: [string, string][] = [['7', 'Last 7 days'], ['30', 'Last 30 days'], ['90', 'Last 90 days'], ['all', 'All time'], ['custom', 'Custom range']];
+const PRESETS: [string, string, string][] = [['7', 'Last 7 days', '7d'], ['30', 'Last 30 days', '30d'], ['90', 'Last 90 days', '90d'], ['180', 'Last 6 months', '6m'], ['365', 'Last 12 months', '12m'], ['all', 'All time', 'All'], ['custom', 'Custom range', 'Custom']];
 const SERIES_COLORS: Record<string, string[]> = {
   bloodPressure: ['var(--chart-1)', 'var(--chart-2)'], glucose: ['var(--chart-3)'], weight: ['var(--chart-4)'], temperature: ['var(--chart-7)'],
   pulse: ['var(--chart-5)'], spo2: ['var(--chart-1)'], respiratoryRate: ['var(--chart-3)'],
@@ -52,6 +55,14 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
   const [q, setQ] = useState('');
   const [newestFirst, setNewestFirst] = useState(true);
   const [filters, setFilters] = useState(false);
+  const [tlAbnormal, setTlAbnormal] = useState(false);
+  // Charts filters
+  const [cq, setCq] = useState('');
+  const [sections, setSections] = useState<string[]>([]);
+  const [chAbnormal, setChAbnormal] = useState(false);
+  const [chFilters, setChFilters] = useState(false);
+  const [openTest, setOpenTest] = useState<string | null>(null);
+  const [showAllAbn, setShowAllAbn] = useState(false);
   const [form, setForm] = useState<{ entry?: Entry } | null>(null);
   const [delE, setDelE] = useState<Entry | null>(null);
   const [taskForm, setTaskForm] = useState<{ task?: Task } | null>(null);
@@ -74,16 +85,27 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
   }, [preset, cFrom, cTo, today]);
   const inPeriod = useMemo(() => (b ? filterPeriod(b.entries, period) : []), [b, period]);
   const titles = useMemo(() => new Map((b?.tasks ?? []).map((t) => [t.id, t.title])), [b]);
+  const sex = b?.patient.sex;
   const shown = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return inPeriod.filter((e) => (!types.length || types.includes(e.type)) && (!needle || (describeEntry(e, titles) + ' ' + (e.note ?? '')).toLowerCase().includes(needle)));
-  }, [inPeriod, types, q, titles]);
+    const raw = q.trim().toLowerCase(), n = normalize(q);
+    return inPeriod.filter((e) => {
+      if (types.length && !types.includes(e.type)) return false;
+      if (tlAbnormal && !entryHasAbnormal(e, sex)) return false;
+      if (!raw) return true;
+      const hay = `${describeEntry(e, titles, sex)} ${e.note ?? ''} ${e.type === 'labs' ? labSearchText(e) : ''}`;
+      return hay.toLowerCase().includes(raw) || (n.length > 0 && normalize(hay).includes(n));
+    });
+  }, [inPeriod, types, q, titles, tlAbnormal, sex]);
   const readings = useMemo(() => inPeriod.flatMap((e) => (e.type === 'vitals' ? e.readings : [])), [inPeriod]);
+  const labTests = useMemo(() => labTestsIn(inPeriod, sex), [inPeriod, sex]);
+  const labResultCount = useMemo(() => labTests.reduce((n, t) => n + t.count, 0), [labTests]);
+  /** Abnormal counts by label, vitals readings and lab results together. */
   const abnormal = useMemo(() => {
     const by = new Map<string, number>();
-    for (const r of readings) if (isAbnormal(r)) by.set(r.metric, (by.get(r.metric) ?? 0) + 1);
+    for (const r of readings) if (isAbnormal(r)) by.set(LABELS[r.metric], (by.get(LABELS[r.metric]) ?? 0) + 1);
+    for (const t of labTests) if (t.abnormal) by.set(t.name, (by.get(t.name) ?? 0) + t.abnormal);
     return by;
-  }, [readings]);
+  }, [readings, labTests]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const occ = useMemo(() => (b ? occurrences(b.tasks, b.entries, new Date(), 24) : []), [b, tick]);
 
@@ -92,6 +114,19 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
   const p = b.patient, age = ageFrom(p.dateOfBirth, p.ageYears);
   const domain: [number, number] | undefined = period.from && period.to ? [istInstant(period.from).getTime(), istInstant(period.to, '23:59').getTime()] : undefined;
   const totalAbn = [...abnormal.values()].reduce((a, c) => a + c, 0);
+  const totalMeas = readings.length + labResultCount;
+  const nq = normalize(cq);
+  const matchQ = (names: string[]) => !nq || names.some((x) => normalize(x).includes(nq));
+  const vitalsCharts = CHARTS.map((c) => ({ ...c, s: metricSeries(inPeriod, c.metric, c.context) })).filter((c) => c.s.length);
+  const vitalsShown = !sections.length || sections.includes('vitals')
+    ? vitalsCharts.filter((c) => matchQ([c.title, LABELS[c.metric]]) && (!chAbnormal || c.s.some((x) => x.points.some((pt) => pt.bad)))) : [];
+  const labShown = labTests.filter((t) => (!sections.length || sections.includes(t.panel)) && matchQ([t.name, ...(LAB_BY_CODE[t.key]?.aliases ?? [])]) && (!chAbnormal || t.abnormal > 0));
+  const sectionOptions = [
+    { id: 'vitals', name: 'Vitals', n: vitalsCharts.length },
+    ...LAB_PANELS.map((pn) => ({ id: pn.id as string, name: pn.name as string, n: labTests.filter((t) => t.panel === pn.id).length })),
+  ].filter((o) => o.n > 0);
+  const chActive = sections.length + (chAbnormal ? 1 : 0);
+  const detail = openTest ? labTests.find((t) => t.key === openTest) : undefined;
   const periodLabel = period.from ? `${dmy(period.from)} – ${dmy(period.to ?? today)}` : period.to ? `until ${dmy(period.to)}` : 'All dates';
   const dueCount = occ.filter(needsAction).length;
 
@@ -107,7 +142,7 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
       <SelectTrigger className="w-auto shrink-0 gap-1.5 px-2.5 sm:px-3" aria-label="Date range">
         <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
         <span className="hidden sm:inline"><SelectValue /></span>
-        <span className="sm:hidden">{preset === 'all' ? 'All' : preset === 'custom' ? 'Custom' : `${preset}d`}</span>
+        <span className="sm:hidden">{PRESETS.find((x) => x[0] === preset)?.[2]}</span>
       </SelectTrigger>
       <SelectContent>{PRESETS.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
     </Select>
@@ -118,7 +153,7 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
       <Field label="To"><Input type="date" value={cTo} min={cFrom || undefined} onChange={(e) => setCTo(e.target.value)} /></Field>
     </div>
   );
-  const activeFilters = types.length + (newestFirst ? 0 : 1);
+  const activeFilters = types.length + (newestFirst ? 0 : 1) + (tlAbnormal ? 1 : 0);
 
   return (
     <div>
@@ -181,8 +216,9 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
               </Button>
             </div>
             {customRange}
-            {(types.length > 0 || !newestFirst) && (
+            {(types.length > 0 || !newestFirst || tlAbnormal) && (
               <div className="flex flex-wrap gap-1.5">
+                {tlAbnormal && <Chip onClear={() => setTlAbnormal(false)}>Abnormal only</Chip>}
                 {types.map((t) => <button key={t} onClick={() => setTypes(types.filter((x) => x !== t))} className="inline-flex items-center gap-1 rounded-full bg-accent py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-accent-foreground">{TYPE_META[t].label}<X className="size-3.5" /></button>)}
                 {!newestFirst && <button onClick={() => setNewestFirst(true)} className="inline-flex items-center gap-1 rounded-full bg-accent py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-accent-foreground">Oldest first<X className="size-3.5" /></button>}
               </div>
@@ -190,11 +226,11 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <span>{periodLabel}</span><span aria-hidden>·</span>
               <span>{shown.length === inPeriod.length ? `${shown.length} entries` : `${shown.length} of ${inPeriod.length} entries`}</span>
-              {totalAbn > 0 && <Badge variant="destructive" className="ml-auto">{totalAbn} abnormal readings</Badge>}
+              {totalAbn > 0 && <Badge variant="destructive" className="ml-auto">{totalAbn} abnormal {totalAbn === 1 ? 'value' : 'values'}</Badge>}
             </div>
           </div>
           <div className="mt-3">
-            {shown.length ? <Timeline entries={shown} tasks={b.tasks} newestFirst={newestFirst} onEdit={(e) => setForm({ entry: e })} onDelete={setDelE} />
+            {shown.length ? <Timeline entries={shown} tasks={b.tasks} newestFirst={newestFirst} sex={sex} onEdit={(e) => setForm({ entry: e })} onDelete={setDelE} />
               : <Empty icon={<ClipboardList />} title={b.entries.length ? 'Nothing matches' : 'No entries yet'}>
                   {b.entries.length ? 'Try a wider date range or clear the filters.' : <Button className="mt-3" onClick={() => setForm({})}><Plus />Add the first entry</Button>}
                 </Empty>}
@@ -203,26 +239,71 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
 
         {/* Charts */}
         <TabsContent value="charts" className="mt-3 grid grid-cols-1 gap-3 outline-none">
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             {rangeSelect}
-            <span className="min-w-0 truncate text-xs text-muted-foreground">{periodLabel} · {readings.length} readings</span>
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input type="search" placeholder="Search tests" value={cq} onChange={(e) => setCq(e.target.value)} className="pl-9" aria-label="Search charts and lab tests" />
+            </div>
+            <Button variant="outline" size="icon" className="relative" onClick={() => setChFilters(true)} aria-label={`Chart filters${chActive ? `, ${chActive} active` : ''}`}>
+              <SlidersHorizontal />
+              {chActive > 0 && <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{chActive}</span>}
+            </Button>
           </div>
           {customRange}
+          {chActive > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {sections.map((id) => <Chip key={id} onClear={() => setSections(sections.filter((x) => x !== id))}>{sectionOptions.find((o) => o.id === id)?.name ?? id}</Chip>)}
+              {chAbnormal && <Chip onClear={() => setChAbnormal(false)}>Abnormal only</Chip>}
+            </div>
+          )}
+          <div className="text-xs text-muted-foreground">{periodLabel} · {readings.length} vitals readings · {labResultCount} lab results</div>
+
           <Card className="p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-[15px] font-semibold tracking-tight">Abnormal summary</h3>
-              <Badge variant={totalAbn ? 'destructive' : readings.length ? 'success' : 'secondary'}>{totalAbn ? `${totalAbn} of ${readings.length}` : readings.length ? 'All in range' : 'No readings'}</Badge>
+              <Badge variant={totalAbn ? 'destructive' : totalMeas ? 'success' : 'secondary'}>{totalAbn ? `${totalAbn} of ${totalMeas}` : totalMeas ? 'All in range' : 'No values'}</Badge>
             </div>
-            {readings.length > 0 && (
+            {totalMeas > 0 && (
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-success-soft">
-                <div className="h-full rounded-full bg-destructive transition-[width] duration-700" style={{ width: `${(totalAbn / readings.length) * 100}%` }} />
+                <div className="h-full rounded-full bg-destructive transition-[width] duration-700" style={{ width: `${(totalAbn / totalMeas) * 100}%` }} />
               </div>
             )}
-            {totalAbn > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{[...abnormal].sort((a, b2) => b2[1] - a[1]).map(([m, n]) => <Badge key={m} variant="outline" className="text-foreground"><span className="text-destructive">◆</span>{LABELS[m as keyof typeof LABELS]} <b className="tabular-nums">{n}</b></Badge>)}</div>}
-            <p className="mt-3 text-xs text-muted-foreground">Flags compare readings with standard adult reference ranges. They are not a diagnosis.</p>
+            {totalAbn > 0 && (() => {
+              const all = [...abnormal].sort((x, y) => y[1] - x[1]);
+              const top = showAllAbn ? all : all.slice(0, 6);
+              return (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {top.map(([m, n]) => <Badge key={m} variant="outline" className="text-foreground"><span className="text-destructive">◆</span><span className="truncate">{m}</span> <b className="tabular-nums">{n}</b></Badge>)}
+                  {all.length > 6 && <button onClick={() => setShowAllAbn(!showAllAbn)} className="rounded-full px-2 text-xs font-semibold text-primary hover:underline">{showAllAbn ? 'Show less' : `+${all.length - 6} more`}</button>}
+                </div>
+              );
+            })()}
+            <p className="mt-3 text-xs text-muted-foreground">Flags compare values with reference ranges (the report's own range when entered, otherwise typical adult ranges). They are not a diagnosis.</p>
           </Card>
-          {CHARTS.map(({ metric, context, title }) => { const s = metricSeries(inPeriod, metric, context); return s.length ? <Chart key={title} title={title} unit={UNITS[metric]} series={s} colors={SERIES_COLORS[metric]} domain={domain} /> : null; })}
-          {!readings.length && <Empty icon={<ChartLine />} title="Not enough data to chart">Add vitals such as blood pressure, sugar or weight, and charts draw themselves for the selected dates.<div className="mt-3"><Button onClick={() => setForm({})}><Plus />Add vitals</Button></div></Empty>}
+
+          {vitalsShown.length > 0 && <>
+            <h2 className="mt-1 flex items-center gap-2 text-base font-semibold tracking-tight">Vitals <span className="text-xs font-normal text-muted-foreground">{vitalsShown.length}</span></h2>
+            {vitalsShown.map(({ metric, title, s: ser }) => <Chart key={title} title={title} unit={UNITS[metric]} series={ser} colors={SERIES_COLORS[metric]} domain={domain} />)}
+          </>}
+          {LAB_PANELS.map((pn) => {
+            const ts = labShown.filter((t) => t.panel === pn.id);
+            if (!ts.length) return null;
+            const bad = ts.filter((t) => t.abnormal).length;
+            return (
+              <section key={pn.id} className="grid grid-cols-1 gap-2">
+                <h2 className="mt-1 flex items-center gap-2 text-base font-semibold tracking-tight">{pn.name}<span className="text-xs font-normal text-muted-foreground">{ts.length} {ts.length === 1 ? 'test' : 'tests'}{bad ? ` · ${bad} with abnormal results` : ''}</span></h2>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {ts.map((t) => <LabTrendCard key={t.key} test={t} series={labSeries(inPeriod, t.key, sex)} history={labHistory(inPeriod, t.key)} sex={sex} onOpen={() => setOpenTest(t.key)} />)}
+                </div>
+              </section>
+            );
+          })}
+          {totalMeas === 0 ? (
+            <Empty icon={<ChartLine />} title="Not enough data to chart">Add vitals or lab results, and charts draw themselves for the selected dates. Try a longer date range for monthly tests.<div className="mt-3"><Button onClick={() => setForm({})}><Plus />Add an entry</Button></div></Empty>
+          ) : vitalsShown.length + labShown.length === 0 && (
+            <Empty icon={<Search />} title="No charts match">Try another search or clear the filters.<div className="mt-3"><Button variant="outline" onClick={() => { setSections([]); setChAbnormal(false); setCq(''); }}>Clear filters</Button></div></Empty>
+          )}
         </TabsContent>
 
         {/* Tasks */}
@@ -288,7 +369,7 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
 
       {filters && (
         <ResponsiveDialog title="Filter timeline" onClose={() => setFilters(false)}
-          footer={<><Button variant="ghost" onClick={() => { setTypes([]); setNewestFirst(true); }} disabled={!activeFilters}>Clear all</Button><Button onClick={() => setFilters(false)}>Show {shown.length} entries</Button></>}>
+          footer={<><Button variant="ghost" onClick={() => { setTypes([]); setNewestFirst(true); setTlAbnormal(false); }} disabled={!activeFilters}>Clear all</Button><Button onClick={() => setFilters(false)}>Show {shown.length} entries</Button></>}>
           <div className="grid grid-cols-1 gap-5">
             <div className="grid grid-cols-1 gap-2">
               <div className="text-[13px] font-medium text-muted-foreground">Entry types</div>
@@ -308,6 +389,15 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
               </div>
             </div>
             <div className="grid grid-cols-1 gap-2">
+              <div className="text-[13px] font-medium text-muted-foreground">Values</div>
+              <div className="grid grid-cols-2 gap-2">
+                {[[false, 'All entries'], [true, 'Abnormal only']].map(([v, l]) => (
+                  <Button key={String(v)} variant={tlAbnormal === v ? 'soft' : 'outline'} className={cn(tlAbnormal === v && 'ring-1 ring-primary')} onClick={() => setTlAbnormal(v as boolean)}>{v ? <TriangleAlert /> : <ClipboardList />}{l as string}</Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Abnormal only keeps vitals and lab reports with at least one value outside its range.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
               <div className="text-[13px] font-medium text-muted-foreground">Order</div>
               <div className="grid grid-cols-2 gap-2">
                 {[[true, 'Newest first'], [false, 'Oldest first']].map(([v, l]) => (
@@ -319,10 +409,44 @@ export function PatientScreen({ onAddRef }: { onAddRef: (fn: (() => void) | null
         </ResponsiveDialog>
       )}
 
+      {chFilters && (
+        <ResponsiveDialog title="Filter charts" onClose={() => setChFilters(false)}
+          footer={<><Button variant="ghost" onClick={() => { setSections([]); setChAbnormal(false); }} disabled={!chActive}>Clear all</Button><Button onClick={() => setChFilters(false)}>Show {vitalsShown.length + labShown.length} charts</Button></>}>
+          <div className="grid grid-cols-1 gap-5">
+            <div className="grid grid-cols-1 gap-2">
+              <div className="text-[13px] font-medium text-muted-foreground">Sections <span className="font-normal">(none selected shows all)</span></div>
+              {sectionOptions.length ? (
+                <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
+                  {sectionOptions.map((o) => {
+                    const on = sections.includes(o.id);
+                    return (
+                      <button key={o.id} aria-pressed={on} onClick={() => setSections(on ? sections.filter((x) => x !== o.id) : [...sections, o.id])}
+                        className={cn('flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring', on ? 'border-primary bg-accent ring-1 ring-primary' : 'hover:bg-muted')}>
+                        <span className="min-w-0 flex-1 truncate">{o.name}</span><span className="text-xs tabular-nums text-muted-foreground">{o.n}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : <p className="text-sm text-muted-foreground">No charts in this date range.</p>}
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="text-[13px] font-medium text-muted-foreground">Values</div>
+              <div className="grid grid-cols-2 gap-2">
+                {[[false, 'All tests'], [true, 'Abnormal only']].map(([v, l]) => (
+                  <Button key={String(v)} variant={chAbnormal === v ? 'soft' : 'outline'} className={cn(chAbnormal === v && 'ring-1 ring-primary')} onClick={() => setChAbnormal(v as boolean)}>{v ? <TriangleAlert /> : <ChartLine />}{l as string}</Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Abnormal only shows charts with at least one value outside its range in the selected dates.</p>
+            </div>
+          </div>
+        </ResponsiveDialog>
+      )}
+      {detail && <LabDetail test={detail} series={labSeries(inPeriod, detail.key, sex)} history={labHistory(inPeriod, detail.key)} sex={sex} domain={domain} onClose={() => setOpenTest(null)} />}
+
       {form && <EntryForm patientId={id} entry={form.entry} onClose={() => setForm(null)} onSaved={afterChange} />}
       {taskForm && <TaskForm patientId={id} task={taskForm.task} onClose={() => setTaskForm(null)} onSaved={afterChange} />}
       {editProfile && <ProfileForm patient={p} onClose={() => setEditProfile(false)} onSaved={async () => { setEditProfile(false); await load(); await refresh(); }} />}
-      {delE && <Confirm title="Delete this entry?" body={`“${describeEntry(delE, titles).slice(0, 120)}” will be removed from the timeline. This cannot be undone.`} onNo={() => setDelE(null)} onYes={async () => { await deleteEntry(id, delE.id); setDelE(null); toast('Entry deleted'); await load(); }} />}
+      {delE && <Confirm title="Delete this entry?" body={`“${describeEntry(delE, titles, sex).slice(0, 120)}” will be removed from the timeline. This cannot be undone.`} onNo={() => setDelE(null)} onYes={async () => { await deleteEntry(id, delE.id); setDelE(null); toast('Entry deleted'); await load(); }} />}
       {delT && <Confirm title={`Delete “${delT.title}”?`} body="The schedule and all its recorded outcomes will be removed. To stop it but keep its history, edit it and set an end date instead." onNo={() => setDelT(null)}
         onYes={async () => { const t = delT; for (const e of b.entries) if (e.type === 'task' && e.taskId === t.id) await deleteEntry(id, e.id); await deleteTask(id, t.id); setDelT(null); toast('Task deleted'); await load(); }} />}
       {delP && <Confirm title={`Delete ${p.name}?`} body="Their profile, timeline and tasks will be permanently removed from this browser. Export a Medasium JSON backup first if you may need them." confirmLabel="Delete patient" onNo={() => setDelP(false)}
@@ -345,3 +469,9 @@ const Row = ({ k, v }: { k: string; v?: React.ReactNode }) => (v ? (
     <span className="text-muted-foreground">{k}</span><span className="min-w-0 break-words">{v}</span>
   </div>
 ) : null);
+
+const Chip = ({ children, onClear }: { children: React.ReactNode; onClear: () => void }) => (
+  <button onClick={onClear} className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-accent-foreground" aria-label={`Remove filter: ${typeof children === 'string' ? children : ''}`}>
+    <span className="truncate">{children}</span><X className="size-3.5 shrink-0" />
+  </button>
+);

@@ -1,12 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { applyImport, listPatients } from './db';
+import { listPatients } from './db';
 import type { Patient } from './model/schema';
-import { loadSample } from './lib/seed';
 import { requestPersist, storageWarning } from './lib/storage';
 
 interface Ctx {
   patients: Patient[]; loading: boolean; version: number; warning: string | null;
-  refresh: () => Promise<void>; seed: () => Promise<string>;
+  refresh: () => Promise<void>;
 }
 const C = createContext<Ctx>(null!);
 export const useStore = () => useContext(C);
@@ -21,13 +20,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setWarning(await storageWarning());
   }, []);
   useEffect(() => { refresh(); requestPersist(); }, [refresh]);
-  const seed = useCallback(async () => {
-    const data = await loadSample();
-    await applyImport(data, 'replace'); // replaces only the sample patient's own record
-    await refresh();
-    return data.patient.id;
-  }, [refresh]);
-  return <C.Provider value={{ patients, loading, version, warning, refresh, seed }}>{children}</C.Provider>;
+  return <C.Provider value={{ patients, loading, version, warning, refresh }}>{children}</C.Provider>;
 }
 
 /** Remember which patient was last opened. */

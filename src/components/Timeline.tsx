@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import type { Entry, Task } from '@/model/schema';
+import { ArrowDown, ArrowUp, ChevronDown, MoreHorizontal, Pencil, Trash2, TriangleAlert } from 'lucide-react';
+import type { Entry, LabsEntry, Task } from '@/model/schema';
+import { LAB_PANELS, fmtRange } from '@/model/labs';
+import { effectiveRange, fmtLabValue, labFlag, labKey, labName, labPanel, labUnit, sortResults, type LabFlag } from '@/lib/labs';
 import { fmtDateLong, fmtTime, ymd } from '@/lib/format';
 import { LABELS, UNITS, isAbnormal } from '@/lib/ranges';
 import { cn } from '@/lib/utils';
@@ -18,7 +20,7 @@ const dayLabel = (iso: string) => {
   return d === t ? 'Today' : d === y ? 'Yesterday' : fmtDateLong(iso);
 };
 
-export function Timeline({ entries, tasks, newestFirst, onEdit, onDelete }: { entries: Entry[]; tasks: Task[]; newestFirst: boolean; onEdit: (e: Entry) => void; onDelete: (e: Entry) => void }) {
+export function Timeline({ entries, tasks, newestFirst, sex, onEdit, onDelete }: { entries: Entry[]; tasks: Task[]; newestFirst: boolean; sex?: string; onEdit: (e: Entry) => void; onDelete: (e: Entry) => void }) {
   const [limit, setLimit] = useState(PAGE);
   const [zoom, setZoom] = useState<string | null>(null);
   const titles = new Map(tasks.map((t) => [t.id, t.title]));
@@ -55,7 +57,7 @@ export function Timeline({ entries, tasks, newestFirst, onEdit, onDelete }: { en
                           <span>{m.label}</span>
                           {e.editedAt && <Badge variant="outline" className="px-1.5 py-0 text-[10px]" title="Corrected after saving">edited</Badge>}
                         </div>
-                        <div className="mt-1 break-words text-sm"><Body e={e} titles={titles} onZoom={setZoom} /></div>
+                        <div className="mt-1 break-words text-sm"><Body e={e} titles={titles} sex={sex} onZoom={setZoom} /></div>
                         {e.note && <p className="mt-1 break-words text-xs text-muted-foreground">Note: {e.note}</p>}
                       </div>
                       <DropdownMenu>
@@ -79,8 +81,9 @@ export function Timeline({ entries, tasks, newestFirst, onEdit, onDelete }: { en
   );
 }
 
-function Body({ e, titles, onZoom }: { e: Entry; titles: Map<string, string>; onZoom: (u: string) => void }) {
+function Body({ e, titles, sex, onZoom }: { e: Entry; titles: Map<string, string>; sex?: string; onZoom: (u: string) => void }) {
   switch (e.type) {
+    case 'labs': return <LabBody e={e} sex={sex} />;
     case 'vitals':
       return (
         <div className="mt-0.5 grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-1.5 pr-1.5">
@@ -111,4 +114,57 @@ function Body({ e, titles, onZoom }: { e: Entry; titles: Map<string, string>; on
     case 'task':
       return <div className="flex flex-wrap items-center gap-2"><b className="font-semibold">{titles.get(e.taskId) ?? 'Care task'}</b><Badge variant={e.outcome === 'done' ? 'success' : e.outcome === 'skipped' ? 'warning' : 'secondary'}>{e.outcome === 'notApplicable' ? 'not applicable' : e.outcome}</Badge>{e.reason && <span className="basis-full text-xs text-muted-foreground">Reason: {e.reason}</span>}</div>;
   }
+}
+
+const FLAG_ICON = { high: ArrowUp, low: ArrowDown, abnormal: TriangleAlert } as const;
+const FLAG_WORD = { high: 'High', low: 'Low', abnormal: 'Abnormal' } as const;
+const COLLAPSED = 6;
+
+function LabBody({ e, sex }: { e: LabsEntry; sex?: string }) {
+  const [open, setOpen] = useState(false);
+  const all = sortResults(e.results).map((r) => ({ r, f: labFlag(r, sex) as LabFlag }));
+  const bad = all.filter((x) => x.f);
+  const many = all.length > COLLAPSED;
+  // Collapsed: show the flagged results (what needs attention); if none are flagged, the first few.
+  const shown = !many || open ? all : bad.length ? bad : all.slice(0, COLLAPSED);
+  const hidden = all.length - shown.length;
+  const groups: [string, typeof all][] = [];
+  for (const x of shown) { const p = labPanel(x.r); if (groups.at(-1)?.[0] !== p) groups.push([p, []]); groups.at(-1)![1].push(x); }
+  return (
+    <div className="grid grid-cols-1 gap-1.5 pr-1.5">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <b className="font-semibold">{e.lab || 'Lab report'}</b>
+        <Badge variant="secondary">{all.length} {all.length === 1 ? 'result' : 'results'}</Badge>
+        {bad.length > 0 ? <Badge variant="destructive"><TriangleAlert />{bad.length} out of range</Badge> : <Badge variant="success">All in range</Badge>}
+      </div>
+      <div className="overflow-hidden rounded-lg border">
+        {groups.map(([panel, xs], gi) => (
+          <div key={`${panel}-${gi}`} className="border-t first:border-t-0">
+            {(open || !many) && groups.length > 1 && <div className="bg-muted/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{LAB_PANELS.find((p) => p.id === panel)?.name}</div>}
+            {xs.map(({ r, f }, i) => {
+              const I = f ? FLAG_ICON[f] : null;
+              const unit = r.text === undefined ? labUnit(r) : '';
+              const range = r.text === undefined ? fmtRange(effectiveRange(r, sex)) : '';
+              return (
+                <div key={`${labKey(r)}-${i}`} className={cn('flex items-baseline gap-2 border-t px-2.5 py-1.5 first:border-t-0', f && 'bg-destructive-soft/60')}>
+                  <span className="min-w-0 flex-1 truncate text-[13px]">{labName(r)}</span>
+                  <span className={cn('shrink-0 text-right text-[13px] font-semibold tabular-nums', f && 'text-destructive')}>
+                    {I && <I className="mr-0.5 inline size-3.5 align-[-2px]" aria-label={FLAG_WORD[f!]} />}{fmtLabValue(r)}
+                    {unit && unit !== 'ratio' && <span className="ml-1 text-[11px] font-medium text-muted-foreground">{unit}</span>}
+                  </span>
+                  {range && <span className="hidden w-24 shrink-0 truncate text-right text-[11px] text-muted-foreground sm:inline">{range}</span>}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      {many && (open || hidden > 0) && (
+        <button onClick={() => setOpen(!open)} aria-expanded={open} className="inline-flex w-fit items-center gap-1 text-xs font-semibold text-primary hover:underline">
+          <ChevronDown className={cn('size-3.5 transition-transform', open && 'rotate-180')} />
+          {open ? 'Show less' : `Show all ${all.length} results${bad.length ? ` (${hidden} more in range)` : ''}`}
+        </button>
+      )}
+    </div>
+  );
 }

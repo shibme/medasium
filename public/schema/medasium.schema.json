@@ -1,691 +1,2698 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "$schema": {
-      "description": "Optional pointer to the JSON Schema URL.",
-      "type": "string"
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "type": "object",
+ "properties": {
+  "$schema": {
+   "description": "Optional pointer to the JSON Schema URL.",
+   "type": "string"
+  },
+  "format": {
+   "type": "string",
+   "const": "medasium"
+  },
+  "version": {
+   "type": "number",
+   "const": 1
+  },
+  "exportedAt": {
+   "type": "string",
+   "format": "date-time",
+   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+   "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+  },
+  "patient": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 64,
+     "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
     },
-    "format": {
+    "name": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    },
+    "dateOfBirth": {
+     "description": "YYYY-MM-DD. Prefer this over ageYears. Indian documents often print DD/MM/YYYY: convert carefully, day first.",
+     "type": "string",
+     "format": "date",
+     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "ageYears": {
+     "description": "Only if the date of birth is unknown.",
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 130
+    },
+    "sex": {
+     "type": "string",
+     "enum": [
+      "female",
+      "male",
+      "other",
+      "unknown"
+     ]
+    },
+    "conditions": {
+     "description": "Known conditions and diagnoses, e.g. \"Type 2 diabetes mellitus\".",
+     "type": "array",
+     "items": {
       "type": "string",
-      "const": "medasium"
+      "minLength": 1,
+      "maxLength": 200
+     }
     },
-    "version": {
-      "type": "number",
-      "const": 1
-    },
-    "exportedAt": {
-      "type": "string",
-      "format": "date-time",
-      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
-    },
-    "patient": {
+    "allergies": {
+     "type": "array",
+     "items": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 64,
-          "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
-        },
-        "dateOfBirth": {
-          "description": "YYYY-MM-DD. Prefer this over ageYears. Indian documents often print DD/MM/YYYY: convert carefully, day first.",
-          "type": "string",
-          "format": "date",
-          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
-        },
-        "ageYears": {
-          "description": "Only if the date of birth is unknown.",
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 130
-        },
-        "sex": {
-          "type": "string",
-          "enum": [
-            "female",
-            "male",
-            "other",
-            "unknown"
-          ]
-        },
-        "conditions": {
-          "description": "Known conditions and diagnoses, e.g. \"Type 2 diabetes mellitus\".",
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          }
-        },
-        "allergies": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "substance": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 200
-              },
-              "reaction": {
-                "type": "string",
-                "maxLength": 300
-              },
-              "severity": {
-                "type": "string",
-                "enum": [
-                  "mild",
-                  "moderate",
-                  "severe"
-                ]
-              }
-            },
-            "required": [
-              "substance"
-            ]
-          }
-        },
-        "emergencyContact": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "maxLength": 200
-            },
-            "phone": {
-              "description": "Indian format \"+91 98xxxxxxxx\" (10-digit mobile). Emergency services: 112 (national), 108 (ambulance).",
-              "type": "string",
-              "maxLength": 30
-            },
-            "relation": {
-              "type": "string",
-              "maxLength": 100
-            }
-          }
-        },
-        "bloodGroup": {
-          "type": "string",
-          "enum": [
-            "A+",
-            "A-",
-            "B+",
-            "B-",
-            "AB+",
-            "AB-",
-            "O+",
-            "O-"
-          ]
-        },
-        "heightCm": {
-          "type": "number",
-          "minimum": 30,
-          "maximum": 260
-        },
-        "baselineWeightKg": {
-          "type": "number",
-          "minimum": 1,
-          "maximum": 400
-        },
-        "note": {
-          "type": "string",
-          "maxLength": 4000
-        }
+       "substance": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "reaction": {
+        "type": "string",
+        "maxLength": 300
+       },
+       "severity": {
+        "type": "string",
+        "enum": [
+         "mild",
+         "moderate",
+         "severe"
+        ]
+       }
       },
       "required": [
-        "id",
-        "name"
-      ],
-      "description": "Patient profile. Exactly one patient per file."
+       "substance"
+      ]
+     }
     },
-    "entries": {
-      "type": "array",
-      "items": {
-        "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
-              },
-              "note": {
-                "description": "Free text note.",
-                "type": "string",
-                "maxLength": 4000
-              },
-              "editedAt": {
-                "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "vitals"
-              },
-              "readings": {
-                "minItems": 1,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "metric": {
-                      "type": "string",
-                      "enum": [
-                        "bloodPressure",
-                        "glucose",
-                        "weight",
-                        "temperature",
-                        "pulse",
-                        "spo2",
-                        "respiratoryRate"
-                      ],
-                      "description": "Fixed units: bloodPressure=mmHg, glucose=mg/dL, weight=kg, temperature=°F, pulse=bpm, spo2=%, respiratoryRate=breaths/min. Convert other units first (mmol/L x 18 = mg/dL; °C x 9/5 + 32 = °F; lb / 2.2046 = kg)."
-                    },
-                    "value": {
-                      "type": "number",
-                      "description": "Reading value. For bloodPressure this is the SYSTOLIC (upper) number."
-                    },
-                    "diastolic": {
-                      "description": "Only for bloodPressure: the DIASTOLIC (lower) number. Required for bloodPressure, not allowed otherwise.",
-                      "type": "number"
-                    },
-                    "context": {
-                      "description": "Only for glucose: fasting, postMeal (2h after food) or random. Defaults to random when omitted.",
-                      "type": "string",
-                      "enum": [
-                        "fasting",
-                        "postMeal",
-                        "random"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "metric",
-                    "value"
-                  ],
-                  "description": "One measurement.",
-                  "allOf": [
-                    {
-                      "if": {
-                        "properties": {
-                          "metric": {
-                            "const": "bloodPressure"
-                          }
-                        },
-                        "required": [
-                          "metric"
-                        ]
-                      },
-                      "then": {
-                        "required": [
-                          "diastolic"
-                        ]
-                      }
-                    },
-                    {
-                      "if": {
-                        "properties": {
-                          "metric": {
-                            "not": {
-                              "const": "bloodPressure"
-                            }
-                          }
-                        },
-                        "required": [
-                          "metric"
-                        ]
-                      },
-                      "then": {
-                        "not": {
-                          "required": [
-                            "diastolic"
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                },
-                "description": "One or more readings taken at the same time."
-              }
-            },
-            "required": [
-              "id",
-              "timestamp",
-              "type",
-              "readings"
-            ],
-            "description": "Vitals and medical metrics. These feed the charts."
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
-              },
-              "note": {
-                "description": "Free text note.",
-                "type": "string",
-                "maxLength": 4000
-              },
-              "editedAt": {
-                "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "medication"
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 200,
-                "description": "Medicine name, e.g. \"Metformin 500 mg\"."
-              },
-              "dose": {
-                "description": "Dose as written, e.g. \"1 tablet\", \"10 units\", \"5 ml\".",
-                "type": "string",
-                "maxLength": 100
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "taken",
-                  "missed",
-                  "skipped",
-                  "refused"
-                ],
-                "description": "What actually happened. Use taken only if the document says it was given."
-              },
-              "reason": {
-                "description": "Why a dose was missed/skipped/refused.",
-                "type": "string",
-                "maxLength": 500
-              }
-            },
-            "required": [
-              "id",
-              "timestamp",
-              "type",
-              "name",
-              "status"
-            ],
-            "description": "A medication dose and whether it was taken. timestamp = time given (or due, if not taken)."
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
-              },
-              "note": {
-                "description": "Free text note.",
-                "type": "string",
-                "maxLength": 4000
-              },
-              "editedAt": {
-                "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "observation"
-              },
-              "text": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 4000,
-                "description": "Symptom, complaint or observation."
-              },
-              "severity": {
-                "type": "string",
-                "enum": [
-                  "mild",
-                  "moderate",
-                  "severe"
-                ]
-              }
-            },
-            "required": [
-              "id",
-              "timestamp",
-              "type",
-              "text"
-            ],
-            "description": "Symptoms and observations."
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
-              },
-              "note": {
-                "description": "Free text note.",
-                "type": "string",
-                "maxLength": 4000
-              },
-              "editedAt": {
-                "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "appointment"
-              },
-              "title": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 200
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "doctorVisit",
-                  "test",
-                  "hospitalStay",
-                  "other"
-                ]
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "scheduled",
-                  "completed",
-                  "cancelled"
-                ]
-              },
-              "provider": {
-                "description": "Doctor, lab or hospital name.",
-                "type": "string",
-                "maxLength": 200
-              },
-              "outcome": {
-                "description": "Result, advice recorded, or diagnosis as written in the document. Do not invent.",
-                "type": "string",
-                "maxLength": 2000
-              }
-            },
-            "required": [
-              "id",
-              "timestamp",
-              "type",
-              "title",
-              "kind",
-              "status"
-            ],
-            "description": "Doctor visits, tests, hospital stays."
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
-              },
-              "note": {
-                "description": "Free text note.",
-                "type": "string",
-                "maxLength": 4000
-              },
-              "editedAt": {
-                "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "photo"
-              },
-              "category": {
-                "type": "string",
-                "enum": [
-                  "report",
-                  "prescription",
-                  "wound",
-                  "other"
-                ]
-              },
-              "caption": {
-                "type": "string",
-                "maxLength": 500
-              },
-              "image": {
-                "type": "string",
-                "maxLength": 1500000,
-                "format": "starts_with",
-                "pattern": "^data:image\\/.*",
-                "description": "Data URL (data:image/jpeg;base64,...). Normally produced by the app; AI agents should usually NOT create photo entries."
-              }
-            },
-            "required": [
-              "id",
-              "timestamp",
-              "type",
-              "category",
-              "image"
-            ],
-            "description": "A photo or attachment (compressed by the app)."
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
-              },
-              "note": {
-                "description": "Free text note.",
-                "type": "string",
-                "maxLength": 4000
-              },
-              "editedAt": {
-                "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "task"
-              },
-              "taskId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "description": "The id of the task definition in `tasks`."
-              },
-              "dueAt": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                "description": "Which scheduled occurrence this outcome is for. MUST equal the occurrence date-time (task time on that date, with the same offset as used by the app, e.g. 2026-11-08T08:00:00+05:30)."
-              },
-              "outcome": {
-                "type": "string",
-                "enum": [
-                  "done",
-                  "skipped",
-                  "notApplicable"
-                ]
-              },
-              "reason": {
-                "description": "REQUIRED when outcome is skipped.",
-                "type": "string",
-                "maxLength": 500
-              }
-            },
-            "required": [
-              "id",
-              "timestamp",
-              "type",
-              "taskId",
-              "dueAt",
-              "outcome"
-            ],
-            "description": "Outcome of one occurrence of a recurring task. timestamp = when the outcome was recorded.",
-            "if": {
-              "properties": {
-                "outcome": {
-                  "const": "skipped"
-                }
-              },
-              "required": [
-                "outcome"
-              ]
-            },
-            "then": {
-              "required": [
-                "reason"
-              ],
-              "properties": {
-                "reason": {
-                  "minLength": 1
-                }
-              }
-            }
-          }
-        ]
+    "emergencyContact": {
+     "type": "object",
+     "properties": {
+      "name": {
+       "type": "string",
+       "maxLength": 200
       },
-      "description": "All timeline entries for this patient, any order (the app sorts by timestamp)."
+      "phone": {
+       "description": "Indian format \"+91 98xxxxxxxx\" (10-digit mobile). Emergency services: 112 (national), 108 (ambulance).",
+       "type": "string",
+       "maxLength": 30
+      },
+      "relation": {
+       "type": "string",
+       "maxLength": 100
+      }
+     }
     },
-    "tasks": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200,
-            "description": "e.g. \"Turn patient\", \"Physiotherapy\", \"Dressing change\"."
-          },
-          "details": {
-            "type": "string",
-            "maxLength": 1000
-          },
-          "times": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
-            },
-            "description": "Local clock times each scheduled day, 24h \"HH:MM\" in IST. \"Every 2 hours\" must be expanded into explicit times."
-          },
-          "daysOfWeek": {
-            "description": "0=Sunday ... 6=Saturday. Omit for every day.",
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 6
-            }
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-            "description": "First day the task applies, YYYY-MM-DD. Every scheduled occurrence from this date with no outcome entry counts as OVERDUE, so set it to today (or the first unresolved day) unless you also supply outcomes for past occurrences."
-          },
-          "endDate": {
-            "description": "Last day, inclusive. Omit if ongoing.",
-            "type": "string",
-            "format": "date",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "times",
-          "startDate"
-        ],
-        "description": "A recurring care need with a schedule."
-      },
-      "description": "Recurring task definitions. Use [] if none."
+    "bloodGroup": {
+     "type": "string",
+     "enum": [
+      "A+",
+      "A-",
+      "B+",
+      "B-",
+      "AB+",
+      "AB-",
+      "O+",
+      "O-"
+     ]
+    },
+    "heightCm": {
+     "type": "number",
+     "minimum": 30,
+     "maximum": 260
+    },
+    "baselineWeightKg": {
+     "type": "number",
+     "minimum": 1,
+     "maximum": 400
+    },
+    "note": {
+     "type": "string",
+     "maxLength": 4000
     }
+   },
+   "required": [
+    "id",
+    "name"
+   ],
+   "description": "Patient profile. Exactly one patient per file."
   },
-  "required": [
-    "format",
-    "version",
-    "exportedAt",
-    "patient",
-    "entries",
-    "tasks"
-  ],
-  "description": "One patient with profile, timeline entries and recurring tasks. India-first: IST (+05:30), mg/dL, °F, kg, cm, +91. Not expressible in JSON Schema (the app also checks): entry ids unique; task ids unique; every task entry taskId matches a tasks[].id. Agent guide: ../agent/AGENTS.md",
-  "$id": "medasium.schema.json",
-  "title": "Medasium patient import/export file"
+  "entries": {
+   "type": "array",
+   "items": {
+    "oneOf": [
+     {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+       },
+       "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+       },
+       "note": {
+        "description": "Free text note.",
+        "type": "string",
+        "maxLength": 4000
+       },
+       "editedAt": {
+        "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+       },
+       "type": {
+        "type": "string",
+        "const": "vitals"
+       },
+       "readings": {
+        "minItems": 1,
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "metric": {
+           "type": "string",
+           "enum": [
+            "bloodPressure",
+            "glucose",
+            "weight",
+            "temperature",
+            "pulse",
+            "spo2",
+            "respiratoryRate"
+           ],
+           "description": "Fixed units: bloodPressure=mmHg, glucose=mg/dL, weight=kg, temperature=°F, pulse=bpm, spo2=%, respiratoryRate=breaths/min. Convert other units first (mmol/L x 18 = mg/dL; °C x 9/5 + 32 = °F; lb / 2.2046 = kg)."
+          },
+          "value": {
+           "type": "number",
+           "description": "Reading value. For bloodPressure this is the SYSTOLIC (upper) number."
+          },
+          "diastolic": {
+           "description": "Only for bloodPressure: the DIASTOLIC (lower) number. Required for bloodPressure, not allowed otherwise.",
+           "type": "number"
+          },
+          "context": {
+           "description": "Only for glucose: fasting, postMeal (2h after food) or random. Defaults to random when omitted.",
+           "type": "string",
+           "enum": [
+            "fasting",
+            "postMeal",
+            "random"
+           ]
+          }
+         },
+         "required": [
+          "metric",
+          "value"
+         ],
+         "description": "One measurement.",
+         "allOf": [
+          {
+           "if": {
+            "properties": {
+             "metric": {
+              "const": "bloodPressure"
+             }
+            },
+            "required": [
+             "metric"
+            ]
+           },
+           "then": {
+            "required": [
+             "diastolic"
+            ]
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "metric": {
+              "not": {
+               "const": "bloodPressure"
+              }
+             }
+            },
+            "required": [
+             "metric"
+            ]
+           },
+           "then": {
+            "not": {
+             "required": [
+              "diastolic"
+             ]
+            }
+           }
+          }
+         ]
+        },
+        "description": "One or more readings taken at the same time."
+       }
+      },
+      "required": [
+       "id",
+       "timestamp",
+       "type",
+       "readings"
+      ],
+      "description": "Vitals and medical metrics. These feed the charts."
+     },
+     {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+       },
+       "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+       },
+       "note": {
+        "description": "Free text note.",
+        "type": "string",
+        "maxLength": 4000
+       },
+       "editedAt": {
+        "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+       },
+       "type": {
+        "type": "string",
+        "const": "medication"
+       },
+       "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "description": "Medicine name, e.g. \"Metformin 500 mg\"."
+       },
+       "dose": {
+        "description": "Dose as written, e.g. \"1 tablet\", \"10 units\", \"5 ml\".",
+        "type": "string",
+        "maxLength": 100
+       },
+       "status": {
+        "type": "string",
+        "enum": [
+         "taken",
+         "missed",
+         "skipped",
+         "refused"
+        ],
+        "description": "What actually happened. Use taken only if the document says it was given."
+       },
+       "reason": {
+        "description": "Why a dose was missed/skipped/refused.",
+        "type": "string",
+        "maxLength": 500
+       }
+      },
+      "required": [
+       "id",
+       "timestamp",
+       "type",
+       "name",
+       "status"
+      ],
+      "description": "A medication dose and whether it was taken. timestamp = time given (or due, if not taken)."
+     },
+     {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+       },
+       "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+       },
+       "note": {
+        "description": "Free text note.",
+        "type": "string",
+        "maxLength": 4000
+       },
+       "editedAt": {
+        "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+       },
+       "type": {
+        "type": "string",
+        "const": "observation"
+       },
+       "text": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000,
+        "description": "Symptom, complaint or observation."
+       },
+       "severity": {
+        "type": "string",
+        "enum": [
+         "mild",
+         "moderate",
+         "severe"
+        ]
+       }
+      },
+      "required": [
+       "id",
+       "timestamp",
+       "type",
+       "text"
+      ],
+      "description": "Symptoms and observations."
+     },
+     {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+       },
+       "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+       },
+       "note": {
+        "description": "Free text note.",
+        "type": "string",
+        "maxLength": 4000
+       },
+       "editedAt": {
+        "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+       },
+       "type": {
+        "type": "string",
+        "const": "appointment"
+       },
+       "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "kind": {
+        "type": "string",
+        "enum": [
+         "doctorVisit",
+         "test",
+         "hospitalStay",
+         "other"
+        ]
+       },
+       "status": {
+        "type": "string",
+        "enum": [
+         "scheduled",
+         "completed",
+         "cancelled"
+        ]
+       },
+       "provider": {
+        "description": "Doctor, lab or hospital name.",
+        "type": "string",
+        "maxLength": 200
+       },
+       "outcome": {
+        "description": "Result, advice recorded, or diagnosis as written in the document. Do not invent.",
+        "type": "string",
+        "maxLength": 2000
+       }
+      },
+      "required": [
+       "id",
+       "timestamp",
+       "type",
+       "title",
+       "kind",
+       "status"
+      ],
+      "description": "Doctor visits, tests, hospital stays."
+     },
+     {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+       },
+       "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+       },
+       "note": {
+        "description": "Free text note.",
+        "type": "string",
+        "maxLength": 4000
+       },
+       "editedAt": {
+        "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+       },
+       "type": {
+        "type": "string",
+        "const": "photo"
+       },
+       "category": {
+        "type": "string",
+        "enum": [
+         "report",
+         "prescription",
+         "wound",
+         "other"
+        ]
+       },
+       "caption": {
+        "type": "string",
+        "maxLength": 500
+       },
+       "image": {
+        "type": "string",
+        "maxLength": 1500000,
+        "format": "starts_with",
+        "pattern": "^data:image\\/.*",
+        "description": "Data URL (data:image/jpeg;base64,...). Normally produced by the app; AI agents should usually NOT create photo entries."
+       }
+      },
+      "required": [
+       "id",
+       "timestamp",
+       "type",
+       "category",
+       "image"
+      ],
+      "description": "A photo or attachment (compressed by the app)."
+     },
+     {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+       },
+       "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+       },
+       "note": {
+        "description": "Free text note.",
+        "type": "string",
+        "maxLength": 4000
+       },
+       "editedAt": {
+        "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+       },
+       "type": {
+        "type": "string",
+        "const": "task"
+       },
+       "taskId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "The id of the task definition in `tasks`."
+       },
+       "dueAt": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "Which scheduled occurrence this outcome is for. MUST equal the occurrence date-time (task time on that date, with the same offset as used by the app, e.g. 2026-11-08T08:00:00+05:30)."
+       },
+       "outcome": {
+        "type": "string",
+        "enum": [
+         "done",
+         "skipped",
+         "notApplicable"
+        ]
+       },
+       "reason": {
+        "description": "REQUIRED when outcome is skipped.",
+        "type": "string",
+        "maxLength": 500
+       }
+      },
+      "required": [
+       "id",
+       "timestamp",
+       "type",
+       "taskId",
+       "dueAt",
+       "outcome"
+      ],
+      "description": "Outcome of one occurrence of a recurring task. timestamp = when the outcome was recorded.",
+      "if": {
+       "properties": {
+        "outcome": {
+         "const": "skipped"
+        }
+       },
+       "required": [
+        "outcome"
+       ]
+      },
+      "then": {
+       "required": [
+        "reason"
+       ],
+       "properties": {
+        "reason": {
+         "minLength": 1
+        }
+       }
+      }
+     },
+     {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+       },
+       "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "ISO 8601 date-time WITH offset, e.g. 2026-11-08T08:30:00+05:30. Use +05:30 (IST) unless the source document says otherwise."
+       },
+       "note": {
+        "description": "Free text note.",
+        "type": "string",
+        "maxLength": 4000
+       },
+       "editedAt": {
+        "description": "Set only if the record was corrected after saving. Omit when creating a new file.",
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+       },
+       "type": {
+        "type": "string",
+        "const": "labs"
+       },
+       "lab": {
+        "description": "Laboratory or hospital name, e.g. \"Adyar Diagnostics\".",
+        "type": "string",
+        "maxLength": 200
+       },
+       "results": {
+        "minItems": 1,
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "test": {
+           "description": "Catalogue test code (see the lab catalogue in the agent guide / the oneOf list in this schema), or \"custom\" for any test not in the catalogue.",
+           "oneOf": [
+            {
+             "const": "ca199",
+             "title": "CA 19-9",
+             "description": "CA 19-9 (CA19.9, CA 19.9, CA19-9, Carbohydrate antigen 19-9). Panel: tumour. Unit: U/mL. Range: ≤ 37."
+            },
+            {
+             "const": "ca125",
+             "title": "CA-125",
+             "description": "CA-125 (CA 125, CA125, Cancer antigen 125). Panel: tumour. Unit: U/mL. Range: ≤ 35."
+            },
+            {
+             "const": "ca153",
+             "title": "CA 15-3",
+             "description": "CA 15-3 (CA15.3, CA 15.3, CA15-3). Panel: tumour. Unit: U/mL. Range: ≤ 30."
+            },
+            {
+             "const": "cea",
+             "title": "CEA",
+             "description": "CEA (Carcinoembryonic antigen). Panel: tumour. Unit: ng/mL. Range: ≤ 5."
+            },
+            {
+             "const": "afp",
+             "title": "AFP",
+             "description": "AFP (Alpha-fetoprotein, Alpha fetoprotein). Panel: tumour. Unit: ng/mL. Range: ≤ 10."
+            },
+            {
+             "const": "psa",
+             "title": "PSA, total",
+             "description": "PSA, total (PSA, Total PSA, Prostate specific antigen). Panel: tumour. Unit: ng/mL. Range: ≤ 4."
+            },
+            {
+             "const": "psaFree",
+             "title": "PSA, free",
+             "description": "PSA, free (Free PSA, fPSA). Panel: tumour. Unit: ng/mL. Range: no default range (copy the report range)."
+            },
+            {
+             "const": "bhcg",
+             "title": "Beta-hCG",
+             "description": "Beta-hCG (b-hCG, Beta HCG, hCG). Panel: tumour. Unit: mIU/mL. Range: ≤ 5."
+            },
+            {
+             "const": "hb",
+             "title": "Haemoglobin",
+             "description": "Haemoglobin (Hb, Hgb, Hemoglobin). Panel: cbc. Unit: g/dL. Range: female 12–15.5, male 13–17. Convert: g/L x 0.1."
+            },
+            {
+             "const": "rbc",
+             "title": "RBC count",
+             "description": "RBC count (Red blood cells, Total RBC, Erythrocytes). Panel: cbc. Unit: million/cumm. Range: female 3.8–4.8, male 4.5–5.5. Convert: ×10⁶/µL x 1; ×10¹²/L x 1."
+            },
+            {
+             "const": "hct",
+             "title": "Haematocrit (PCV)",
+             "description": "Haematocrit (PCV) (PCV, HCT, Hematocrit, Packed cell volume). Panel: cbc. Unit: %. Range: female 36–46, male 40–50."
+            },
+            {
+             "const": "mcv",
+             "title": "MCV",
+             "description": "MCV (Mean corpuscular volume). Panel: cbc. Unit: fL. Range: 80–100."
+            },
+            {
+             "const": "mch",
+             "title": "MCH",
+             "description": "MCH (Mean corpuscular haemoglobin). Panel: cbc. Unit: pg. Range: 27–32."
+            },
+            {
+             "const": "mchc",
+             "title": "MCHC",
+             "description": "MCHC (Mean corpuscular haemoglobin concentration). Panel: cbc. Unit: g/dL. Range: 31.5–34.5."
+            },
+            {
+             "const": "rdw",
+             "title": "RDW-CV",
+             "description": "RDW-CV (RDW, Red cell distribution width). Panel: cbc. Unit: %. Range: 11.6–14."
+            },
+            {
+             "const": "wbc",
+             "title": "Total WBC count",
+             "description": "Total WBC count (TLC, TC, WBC, Total leucocyte count, Leukocytes). Panel: cbc. Unit: cells/cumm. Range: 4000–11000. Convert: ×10³/µL x 1000; ×10⁹/L x 1000; /µL x 1."
+            },
+            {
+             "const": "neut",
+             "title": "Neutrophils",
+             "description": "Neutrophils (Polymorphs, Neutrophil %). Panel: cbc. Unit: %. Range: 40–75."
+            },
+            {
+             "const": "lymph",
+             "title": "Lymphocytes",
+             "description": "Lymphocytes (Lymphocyte %). Panel: cbc. Unit: %. Range: 20–40."
+            },
+            {
+             "const": "mono",
+             "title": "Monocytes",
+             "description": "Monocytes (Monocyte %). Panel: cbc. Unit: %. Range: 2–10."
+            },
+            {
+             "const": "eos",
+             "title": "Eosinophils",
+             "description": "Eosinophils (Eosinophil %). Panel: cbc. Unit: %. Range: 1–6."
+            },
+            {
+             "const": "baso",
+             "title": "Basophils",
+             "description": "Basophils (Basophil %). Panel: cbc. Unit: %. Range: ≤ 2."
+            },
+            {
+             "const": "anc",
+             "title": "Absolute neutrophil count",
+             "description": "Absolute neutrophil count (ANC, Absolute neutrophils). Panel: cbc. Unit: cells/cumm. Range: 2000–7000. Convert: ×10³/µL x 1000; ×10⁹/L x 1000; /µL x 1."
+            },
+            {
+             "const": "alc",
+             "title": "Absolute lymphocyte count",
+             "description": "Absolute lymphocyte count (ALC, Absolute lymphocytes). Panel: cbc. Unit: cells/cumm. Range: 1000–3000. Convert: ×10³/µL x 1000; ×10⁹/L x 1000; /µL x 1."
+            },
+            {
+             "const": "plt",
+             "title": "Platelet count",
+             "description": "Platelet count (Platelets, PLT, Thrombocytes). Panel: cbc. Unit: lakh/cumm. Range: 1.5–4.5. Convert: ×10³/µL x 0.01; ×10⁹/L x 0.01; /cumm x 0.00001."
+            },
+            {
+             "const": "esr",
+             "title": "ESR",
+             "description": "ESR (Erythrocyte sedimentation rate). Panel: cbc. Unit: mm/hr. Range: female ≤ 20, male ≤ 15."
+            },
+            {
+             "const": "biliT",
+             "title": "Bilirubin, total",
+             "description": "Bilirubin, total (Total bilirubin, S. bilirubin, TBIL). Panel: lft. Unit: mg/dL. Range: ≤ 1.2. Convert: µmol/L x 0.05848."
+            },
+            {
+             "const": "biliD",
+             "title": "Bilirubin, direct",
+             "description": "Bilirubin, direct (Direct bilirubin, Conjugated bilirubin, DBIL). Panel: lft. Unit: mg/dL. Range: ≤ 0.3. Convert: µmol/L x 0.05848."
+            },
+            {
+             "const": "biliI",
+             "title": "Bilirubin, indirect",
+             "description": "Bilirubin, indirect (Indirect bilirubin, Unconjugated bilirubin). Panel: lft. Unit: mg/dL. Range: ≤ 0.8. Convert: µmol/L x 0.05848."
+            },
+            {
+             "const": "ast",
+             "title": "SGOT (AST)",
+             "description": "SGOT (AST) (AST, SGOT, Aspartate aminotransferase). Panel: lft. Unit: U/L. Range: ≤ 40."
+            },
+            {
+             "const": "alt",
+             "title": "SGPT (ALT)",
+             "description": "SGPT (ALT) (ALT, SGPT, Alanine aminotransferase). Panel: lft. Unit: U/L. Range: ≤ 40."
+            },
+            {
+             "const": "alp",
+             "title": "Alkaline phosphatase",
+             "description": "Alkaline phosphatase (ALP, SAP). Panel: lft. Unit: U/L. Range: 44–147."
+            },
+            {
+             "const": "ggt",
+             "title": "GGT",
+             "description": "GGT (Gamma GT, GGTP, Gamma-glutamyl transferase). Panel: lft. Unit: U/L. Range: female ≤ 42, male ≤ 71."
+            },
+            {
+             "const": "protein",
+             "title": "Total protein",
+             "description": "Total protein (S. protein, Serum protein). Panel: lft. Unit: g/dL. Range: 6–8.3. Convert: g/L x 0.1."
+            },
+            {
+             "const": "albumin",
+             "title": "Albumin",
+             "description": "Albumin (S. albumin, Serum albumin). Panel: lft. Unit: g/dL. Range: 3.5–5. Convert: g/L x 0.1."
+            },
+            {
+             "const": "globulin",
+             "title": "Globulin",
+             "description": "Globulin (S. globulin). Panel: lft. Unit: g/dL. Range: 2–3.5. Convert: g/L x 0.1."
+            },
+            {
+             "const": "agRatio",
+             "title": "A/G ratio",
+             "description": "A/G ratio (Albumin globulin ratio, A:G ratio). Panel: lft. Unit: ratio. Range: 1–2.1."
+            },
+            {
+             "const": "urea",
+             "title": "Blood urea",
+             "description": "Blood urea (Urea, S. urea). Panel: rft. Unit: mg/dL. Range: 15–45. Convert: mmol/L x 6.006."
+            },
+            {
+             "const": "bun",
+             "title": "BUN",
+             "description": "BUN (Blood urea nitrogen, Urea nitrogen). Panel: rft. Unit: mg/dL. Range: 7–20. Convert: mmol/L x 2.801."
+            },
+            {
+             "const": "creat",
+             "title": "Creatinine",
+             "description": "Creatinine (S. creatinine, Serum creatinine, Cr). Panel: rft. Unit: mg/dL. Range: female 0.5–1.1, male 0.7–1.3. Convert: µmol/L x 0.01131."
+            },
+            {
+             "const": "egfr",
+             "title": "eGFR",
+             "description": "eGFR (GFR, Estimated GFR). Panel: rft. Unit: mL/min/1.73m². Range: ≥ 60."
+            },
+            {
+             "const": "uric",
+             "title": "Uric acid",
+             "description": "Uric acid (S. uric acid, Urate). Panel: rft. Unit: mg/dL. Range: female 2.4–6, male 3.4–7. Convert: µmol/L x 0.01681."
+            },
+            {
+             "const": "na",
+             "title": "Sodium",
+             "description": "Sodium (Na, Na+, S. sodium). Panel: rft. Unit: mmol/L. Range: 135–145. Convert: mEq/L x 1."
+            },
+            {
+             "const": "k",
+             "title": "Potassium",
+             "description": "Potassium (K, K+, S. potassium). Panel: rft. Unit: mmol/L. Range: 3.5–5.1. Convert: mEq/L x 1."
+            },
+            {
+             "const": "cl",
+             "title": "Chloride",
+             "description": "Chloride (Cl, Cl-, S. chloride). Panel: rft. Unit: mmol/L. Range: 98–107. Convert: mEq/L x 1."
+            },
+            {
+             "const": "hco3",
+             "title": "Bicarbonate",
+             "description": "Bicarbonate (HCO3, Total CO2, TCO2). Panel: rft. Unit: mmol/L. Range: 22–29. Convert: mEq/L x 1."
+            },
+            {
+             "const": "ca",
+             "title": "Calcium, total",
+             "description": "Calcium, total (Calcium, S. calcium, Ca). Panel: rft. Unit: mg/dL. Range: 8.5–10.5. Convert: mmol/L x 4.008."
+            },
+            {
+             "const": "phos",
+             "title": "Phosphorus",
+             "description": "Phosphorus (Phosphate, S. phosphorus, PO4). Panel: rft. Unit: mg/dL. Range: 2.5–4.5. Convert: mmol/L x 3.097."
+            },
+            {
+             "const": "mg",
+             "title": "Magnesium",
+             "description": "Magnesium (Mg, S. magnesium). Panel: rft. Unit: mg/dL. Range: 1.7–2.2. Convert: mmol/L x 2.431."
+            },
+            {
+             "const": "hba1c",
+             "title": "HbA1c",
+             "description": "HbA1c (Glycated haemoglobin, Glycosylated haemoglobin, A1c). Panel: diabetes. Unit: %. Range: ≤ 5.6."
+            },
+            {
+             "const": "fbsLab",
+             "title": "Glucose, fasting (lab)",
+             "description": "Glucose, fasting (lab) (FBS, FBG, FPG, Fasting blood sugar, Fasting plasma glucose). Panel: diabetes. Unit: mg/dL. Range: 70–100. Convert: mmol/L x 18.02."
+            },
+            {
+             "const": "ppbsLab",
+             "title": "Glucose, post-meal (lab)",
+             "description": "Glucose, post-meal (lab) (PPBS, PPBG, PP sugar, Post prandial blood sugar). Panel: diabetes. Unit: mg/dL. Range: 70–140. Convert: mmol/L x 18.02."
+            },
+            {
+             "const": "rbsLab",
+             "title": "Glucose, random (lab)",
+             "description": "Glucose, random (lab) (RBS, RBG, Random blood sugar). Panel: diabetes. Unit: mg/dL. Range: 70–140. Convert: mmol/L x 18.02."
+            },
+            {
+             "const": "chol",
+             "title": "Total cholesterol",
+             "description": "Total cholesterol (Cholesterol, S. cholesterol, T. cholesterol). Panel: lipid. Unit: mg/dL. Range: ≤ 200. Convert: mmol/L x 38.67."
+            },
+            {
+             "const": "tg",
+             "title": "Triglycerides",
+             "description": "Triglycerides (TG, S. triglycerides). Panel: lipid. Unit: mg/dL. Range: ≤ 150. Convert: mmol/L x 88.57."
+            },
+            {
+             "const": "hdl",
+             "title": "HDL cholesterol",
+             "description": "HDL cholesterol (HDL, HDL-C). Panel: lipid. Unit: mg/dL. Range: female ≥ 50, male ≥ 40. Convert: mmol/L x 38.67."
+            },
+            {
+             "const": "ldl",
+             "title": "LDL cholesterol",
+             "description": "LDL cholesterol (LDL, LDL-C). Panel: lipid. Unit: mg/dL. Range: ≤ 100. Convert: mmol/L x 38.67."
+            },
+            {
+             "const": "vldl",
+             "title": "VLDL cholesterol",
+             "description": "VLDL cholesterol (VLDL). Panel: lipid. Unit: mg/dL. Range: ≤ 30. Convert: mmol/L x 38.67."
+            },
+            {
+             "const": "nonHdl",
+             "title": "Non-HDL cholesterol",
+             "description": "Non-HDL cholesterol (Non HDL, Non-HDL-C). Panel: lipid. Unit: mg/dL. Range: ≤ 130. Convert: mmol/L x 38.67."
+            },
+            {
+             "const": "tsh",
+             "title": "TSH",
+             "description": "TSH (Thyroid stimulating hormone, S. TSH). Panel: thyroid. Unit: µIU/mL. Range: 0.4–4.5. Convert: mIU/L x 1."
+            },
+            {
+             "const": "ft4",
+             "title": "Free T4",
+             "description": "Free T4 (FT4, Free thyroxine). Panel: thyroid. Unit: ng/dL. Range: 0.8–1.8. Convert: pmol/L x 0.0777."
+            },
+            {
+             "const": "ft3",
+             "title": "Free T3",
+             "description": "Free T3 (FT3, Free triiodothyronine). Panel: thyroid. Unit: pg/mL. Range: 2.3–4.2. Convert: pmol/L x 0.651."
+            },
+            {
+             "const": "t3",
+             "title": "Total T3",
+             "description": "Total T3 (T3, Triiodothyronine). Panel: thyroid. Unit: ng/dL. Range: 80–200. Convert: ng/mL x 100."
+            },
+            {
+             "const": "t4",
+             "title": "Total T4",
+             "description": "Total T4 (T4, Thyroxine). Panel: thyroid. Unit: µg/dL. Range: 5–12."
+            },
+            {
+             "const": "vitD",
+             "title": "Vitamin D (25-OH)",
+             "description": "Vitamin D (25-OH) (Vitamin D, Vit D, 25-hydroxy vitamin D, 25 OH D). Panel: vitamins. Unit: ng/mL. Range: 30–100. Convert: nmol/L x 0.4006."
+            },
+            {
+             "const": "b12",
+             "title": "Vitamin B12",
+             "description": "Vitamin B12 (B12, Cobalamin, Vit B12). Panel: vitamins. Unit: pg/mL. Range: 200–900. Convert: pmol/L x 1.355."
+            },
+            {
+             "const": "folate",
+             "title": "Folate",
+             "description": "Folate (Folic acid, S. folate). Panel: vitamins. Unit: ng/mL. Range: 3–20."
+            },
+            {
+             "const": "ferritin",
+             "title": "Ferritin",
+             "description": "Ferritin (S. ferritin). Panel: vitamins. Unit: ng/mL. Range: female 13–150, male 30–400. Convert: µg/L x 1."
+            },
+            {
+             "const": "iron",
+             "title": "Serum iron",
+             "description": "Serum iron (Iron, S. iron, Fe). Panel: vitamins. Unit: µg/dL. Range: 60–170. Convert: µmol/L x 5.585."
+            },
+            {
+             "const": "tibc",
+             "title": "TIBC",
+             "description": "TIBC (Total iron binding capacity). Panel: vitamins. Unit: µg/dL. Range: 250–450. Convert: µmol/L x 5.585."
+            },
+            {
+             "const": "tsat",
+             "title": "Transferrin saturation",
+             "description": "Transferrin saturation (TSAT, Iron saturation, % saturation). Panel: vitamins. Unit: %. Range: 20–50."
+            },
+            {
+             "const": "crp",
+             "title": "CRP",
+             "description": "CRP (C-reactive protein, CRP quantitative). Panel: clotting. Unit: mg/L. Range: ≤ 6. Convert: mg/dL x 10."
+            },
+            {
+             "const": "pt",
+             "title": "Prothrombin time",
+             "description": "Prothrombin time (PT). Panel: clotting. Unit: seconds. Range: 11–13.5."
+            },
+            {
+             "const": "inr",
+             "title": "INR",
+             "description": "INR (PT-INR, International normalised ratio). Panel: clotting. Unit: ratio. Range: 0.8–1.2."
+            },
+            {
+             "const": "aptt",
+             "title": "aPTT",
+             "description": "aPTT (APTT, PTT, Activated partial thromboplastin time). Panel: clotting. Unit: seconds. Range: 25–35."
+            },
+            {
+             "const": "ddimer",
+             "title": "D-dimer",
+             "description": "D-dimer (D dimer). Panel: clotting. Unit: µg/mL FEU. Range: ≤ 0.5. Convert: ng/mL FEU x 0.001; mg/L FEU x 1."
+            },
+            {
+             "const": "ldh",
+             "title": "LDH",
+             "description": "LDH (Lactate dehydrogenase, LD). Panel: clotting. Unit: U/L. Range: 140–280."
+            },
+            {
+             "const": "custom",
+             "title": "Custom test",
+             "description": "Any test not in the catalogue. Requires name; give unit and the report range if printed."
+            }
+           ]
+          },
+          "name": {
+           "description": "REQUIRED for custom tests: the test name as printed. Optional (ignored) for catalogue tests.",
+           "type": "string",
+           "minLength": 1,
+           "maxLength": 120
+          },
+          "value": {
+           "description": "Numeric result, ALREADY CONVERTED to the test's canonical unit. Exactly one of value or text.",
+           "type": "number"
+          },
+          "qualifier": {
+           "description": "Use when the report prints \"<2.0\" or \">1000\": put the number in value and \"<\" or \">\" here.",
+           "type": "string",
+           "enum": [
+            "<",
+            ">"
+           ]
+          },
+          "text": {
+           "description": "Non-numeric result as printed, e.g. \"Negative\", \"Non-reactive\", \"6-8 /HPF\". Exactly one of value or text.",
+           "type": "string",
+           "minLength": 1,
+           "maxLength": 200
+          },
+          "abnormal": {
+           "description": "Only for text results: true if the report marks it abnormal. Numeric results are flagged automatically from the range.",
+           "type": "boolean"
+          },
+          "unit": {
+           "description": "Catalogue tests: omit, or give the canonical unit exactly. Custom tests: the unit as printed.",
+           "type": "string",
+           "minLength": 1,
+           "maxLength": 40
+          },
+          "refLow": {
+           "description": "Lower limit of the reference range PRINTED ON THE REPORT (canonical unit). Overrides the catalogue range.",
+           "type": "number"
+          },
+          "refHigh": {
+           "description": "Upper limit of the reference range PRINTED ON THE REPORT (canonical unit). For \"< 37\" use refHigh 37.",
+           "type": "number"
+          }
+         },
+         "required": [
+          "test"
+         ],
+         "description": "One lab test result.",
+         "allOf": [
+          {
+           "oneOf": [
+            {
+             "required": [
+              "value"
+             ],
+             "not": {
+              "required": [
+               "text"
+              ]
+             }
+            },
+            {
+             "required": [
+              "text"
+             ],
+             "not": {
+              "required": [
+               "value"
+              ]
+             }
+            }
+           ]
+          },
+          {
+           "if": {
+            "required": [
+             "qualifier"
+            ]
+           },
+           "then": {
+            "required": [
+             "value"
+            ]
+           }
+          },
+          {
+           "if": {
+            "required": [
+             "abnormal"
+            ]
+           },
+           "then": {
+            "required": [
+             "text"
+            ]
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "custom"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "required": [
+             "name"
+            ],
+            "properties": {
+             "name": {
+              "minLength": 1,
+              "pattern": "\\S"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ca199"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ca125"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ca153"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "cea"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "afp"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "psa"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "psaFree"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "bhcg"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mIU/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "hb"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "g/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "rbc"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "million/cumm"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "hct"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "mcv"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "fL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "mch"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "pg"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "mchc"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "g/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "rdw"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "wbc"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "cells/cumm"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "neut"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "lymph"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "mono"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "eos"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "baso"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "anc"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "cells/cumm"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "alc"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "cells/cumm"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "plt"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "lakh/cumm"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "esr"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mm/hr"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "biliT"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "biliD"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "biliI"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ast"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "alt"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "alp"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ggt"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "protein"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "g/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "albumin"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "g/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "globulin"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "g/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "agRatio"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ratio"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "urea"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "bun"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "creat"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "egfr"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mL/min/1.73m²"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "uric"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "na"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mmol/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "k"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mmol/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "cl"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mmol/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "hco3"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mmol/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ca"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "phos"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "mg"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "hba1c"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "fbsLab"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ppbsLab"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "rbsLab"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "chol"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "tg"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "hdl"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ldl"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "vldl"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "nonHdl"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "tsh"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "µIU/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ft4"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ft3"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "pg/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "t3"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "t4"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "µg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "vitD"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "b12"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "pg/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "folate"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ferritin"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ng/mL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "iron"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "µg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "tibc"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "µg/dL"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "tsat"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "%"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "crp"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "mg/L"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "pt"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "seconds"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "inr"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "ratio"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "aptt"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "seconds"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ddimer"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "µg/mL FEU"
+             }
+            }
+           }
+          },
+          {
+           "if": {
+            "properties": {
+             "test": {
+              "const": "ldh"
+             }
+            },
+            "required": [
+             "test"
+            ]
+           },
+           "then": {
+            "properties": {
+             "unit": {
+              "const": "U/L"
+             }
+            }
+           }
+          }
+         ]
+        },
+        "description": "All results from one report / sample collection."
+       }
+      },
+      "required": [
+       "id",
+       "timestamp",
+       "type",
+       "results"
+      ],
+      "description": "Lab report: one sample collection with its results. timestamp = sample collection time."
+     }
+    ]
+   },
+   "description": "All timeline entries for this patient, any order (the app sorts by timestamp)."
+  },
+  "tasks": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Unique within the file. UUID recommended; any short unique string such as \"e_001\" is accepted. Used to match records on merge."
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "e.g. \"Turn patient\", \"Physiotherapy\", \"Dressing change\"."
+     },
+     "details": {
+      "type": "string",
+      "maxLength": 1000
+     },
+     "times": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+      },
+      "description": "Local clock times each scheduled day, 24h \"HH:MM\" in IST. \"Every 2 hours\" must be expanded into explicit times."
+     },
+     "daysOfWeek": {
+      "description": "0=Sunday ... 6=Saturday. Omit for every day.",
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 6
+      }
+     },
+     "startDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+      "description": "First day the task applies, YYYY-MM-DD. Every scheduled occurrence from this date with no outcome entry counts as OVERDUE, so set it to today (or the first unresolved day) unless you also supply outcomes for past occurrences."
+     },
+     "endDate": {
+      "description": "Last day, inclusive. Omit if ongoing.",
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "times",
+     "startDate"
+    ],
+    "description": "A recurring care need with a schedule."
+   },
+   "description": "Recurring task definitions. Use [] if none."
+  }
+ },
+ "required": [
+  "format",
+  "version",
+  "exportedAt",
+  "patient",
+  "entries",
+  "tasks"
+ ],
+ "description": "One patient with profile, timeline entries (vitals, lab results, medications, observations, appointments, photos, task outcomes) and recurring tasks. India-first: IST (+05:30), mg/dL, °F, kg, cm, +91; lab values in each test's canonical unit. Not expressible in JSON Schema (the app also checks): entry ids unique; task ids unique; every task entry taskId matches a tasks[].id; lab refLow <= refHigh. Agent guide: ../agent/AGENTS.md",
+ "$id": "medasium.schema.json",
+ "title": "Medasium patient import/export file"
 }

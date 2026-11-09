@@ -1,7 +1,7 @@
 import type { Entry, Metric } from '../model/schema';
 import { RANGES, rangeFor, outside, type Range } from './ranges';
 
-export interface Pt { t: number; v: number; bad: boolean; id: string }
+export interface Pt { t: number; v: number; bad: boolean; id: string; q?: '<' | '>' }
 export interface Series { key: string; label: string; points: Pt[]; range?: Range }
 
 /** Series for one metric, built only from existing readings (nothing invented or interpolated). */

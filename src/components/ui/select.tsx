@@ -26,11 +26,13 @@ export function SelectContent({ className, children, position = 'popper', ...pro
     </SelectPrimitive.Portal>
   );
 }
-export function SelectItem({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Item>) {
+/** `hint` shows in the list only, never in the closed trigger. */
+export function SelectItem({ className, children, hint, ...props }: React.ComponentProps<typeof SelectPrimitive.Item> & { hint?: React.ReactNode }) {
   return (
-    <SelectPrimitive.Item className={cn('relative flex w-full cursor-default select-none items-center rounded-md py-2 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:opacity-50', className)} {...props}>
+    <SelectPrimitive.Item className={cn('relative flex w-full cursor-default select-none items-center gap-2 rounded-md py-2 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:opacity-50', className)} {...props}>
       <span className="absolute left-2 flex size-4 items-center justify-center"><SelectPrimitive.ItemIndicator><Check className="size-4" /></SelectPrimitive.ItemIndicator></span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
     </SelectPrimitive.Item>
   );
 }
